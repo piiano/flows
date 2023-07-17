@@ -1,5 +1,5 @@
 <p>
-  [<a href="https://piiano.com/pii-data-privacy-vault/">](https://www.piiano.com/pii-code-scanner)
+  <a href="https://piiano.com/pii-code-scanner/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="https://piiano.com/docs/img/logo-developers-dark.svg">
       <source media="(prefers-color-scheme: light)" srcset="https://piiano.com/wp-content/uploads/piiano-logo-developers.png">
