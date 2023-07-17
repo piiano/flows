@@ -19,14 +19,15 @@ The Piiano Flows is a static code analyzer that connects to your online source c
 
 More details can be found [on our website](https://piiano.com/pii-code-scanner/).
 
-## Accessing Piiano Flows
+## Running Piiano Flows
 
 ### SaaS
 
-The easiest way to access Piiano Flows is by running it online: https://scanner.piiano.io
-Easily connect your publically availale Git repository or a private GitHub repository and scan it online without installing anything. View results online.
+The easiest way to run Piiano Flows is by accessing it online: https://scanner.piiano.io  
+
+You can connect your publically availale Git repositories or connect private GitHub repositories. Scan your repositories online without installing anything and view results.
 
 ### Offline
 
-Piiano Flows is also provided as a standalone container that you can run locally against your code base.
+Piiano Flows is also provided as a standalone container that you can run locally on your code base.
 Follow [these instructions](./offline-flows) for working offline with Piiano Flows.
