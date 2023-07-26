@@ -5,6 +5,8 @@
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/)
+- [curl](https://curl.se/)
+- [AWS CLI](https://aws.amazon.com/cli/)
 - The [offline-flows.sh](./offline-flows.sh) script.
 
 ### Generate a Personal Token
