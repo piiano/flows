@@ -23,13 +23,23 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
-if [ -z "${FRONTEGG_CLIENT_ID}" ]; then
+if [ -z "${FRONTEGG_CLIENT_ID:-}" ]; then
   echo "ERROR: The environment variable FRONTEGG_CLIENT_ID is not set."
   exit 1
 fi
 
-if [ -z "${FRONTEGG_CLIENT_SECRET}" ]; then
+if [ -z "${FRONTEGG_CLIENT_SECRET:-}" ]; then
   echo "ERROR: The environment variable FRONTEGG_CLIENT_SECRET is not set."
+  exit 1
+fi
+
+if [ -z "${PIIANO_CS_CUSTOMER_IDENTIFIER:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CS_CUSTOMER_IDENTIFIER is not set."
+  exit 1
+fi
+
+if [ -z "${PIIANO_CS_CUSTOMER_ENV:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CS_CUSTOMER_ENV is not set."
   exit 1
 fi
 
@@ -40,8 +50,8 @@ fi
 
 # Get an access token.
 echo "[ ] Getting access token..."
-ACCESS_TOKEN=$(curl --silent --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${FRONTEGG_CLIENT_ID}\",\"secret\": \"${FRONTEGG_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
-USER_ID=$(curl --silent -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
+ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${FRONTEGG_CLIENT_ID}\",\"secret\": \"${FRONTEGG_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
+USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
 
 # Assume AWS role.
 echo "[ ] Getting AWS access..."
@@ -58,9 +68,11 @@ docker run --rm \
     -e AWS_ACCESS_KEY_ID="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.AccessKeyId')" \
     -e AWS_SECRET_ACCESS_KEY="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.SecretAccessKey')" \
     -e AWS_SESSION_TOKEN="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.SessionToken')" \
-    -e PIIANO_CS_ONLINE=false \
-    -e PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME} \
-    -e PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME} \
+    -e "PIIANO_CS_ONLINE=false" \
+    -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
+    -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
+    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CS_CUSTOMER_IDENTIFIER}" \
+    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CS_CUSTOMER_ENV}" \
     -v "$1:/source" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE}

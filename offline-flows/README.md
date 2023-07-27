@@ -25,7 +25,11 @@
 Using the [offline-flows.sh](./offline-flows.sh) script, run the following command:
 
 ```bash
-FRONTEGG_CLIENT_ID=<frontegg_client_id> FRONTEGG_CLIENT_SECRET=<frontegg_client_secret> ./offline-flows.sh <absolute-path-to-your-code-base>
+FRONTEGG_CLIENT_ID=<frontegg-client-id> \
+FRONTEGG_CLIENT_SECRET=<frontegg-client-secret> \
+PIIANO_CS_CUSTOMER_IDENTIFIER=<your-company-name> \
+PIIANO_CS_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
+./offline-flows.sh <absolute-path-to-your-code-base>
 ```
 
 This script will run the Piiano Flows container and analyze the code you provided. The container will start a server on port 3002 by default. You can access the results by opening http://localhost:3002 in your browser.
