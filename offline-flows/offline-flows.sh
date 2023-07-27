@@ -2,9 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+ECR_REGISTRY=211558624535.dkr.ecr.us-east-2.amazonaws.com
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE=211558624535.dkr.ecr.us-east-2.amazonaws.com/scanner-scan:cpu-0.2.655
+PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:cpu-0.2.655"
 PORT=${PORT:=3002}
 
 is_absolute_path() {
@@ -61,13 +62,25 @@ ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-frontegg-offline-user \
     --web-identity-token "${ACCESS_TOKEN}")
 
+# Set AWS credentials.
+unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE
+AWS_ACCESS_KEY_ID=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.AccessKeyId')
+AWS_SECRET_ACCESS_KEY=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SecretAccessKey')
+AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionToken')
+
+# Login to ECR.
+AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
+aws ecr get-login-password --region=us-east-2 | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
 docker run --rm \
     -e AWS_REGION=us-east-2  \
-    -e AWS_ACCESS_KEY_ID="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.AccessKeyId')" \
-    -e AWS_SECRET_ACCESS_KEY="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.SecretAccessKey')" \
-    -e AWS_SESSION_TOKEN="$(echo "${ASSUME_ROLE_OUTPUT}" | jq '.Credentials.SessionToken')" \
+    -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+    -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+    -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
     -e "PIIANO_CS_ONLINE=false" \
     -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
     -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
