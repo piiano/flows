@@ -18,29 +18,37 @@ is_absolute_path() {
   fi
 }
 
+handle_error() {
+    local exit_code="$?"
+    echo "An error occurred. Exit code: $exit_code"
+}
+
+
+trap handle_error ERR
+
 # Verify inputs.
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 <absolute-path-to-source-code>"
   exit 1
 fi
 
-if [ -z "${FRONTEGG_CLIENT_ID:-}" ]; then
-  echo "ERROR: The environment variable FRONTEGG_CLIENT_ID is not set."
+if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CLIENT_SECRET is not set."
   exit 1
 fi
 
-if [ -z "${FRONTEGG_CLIENT_SECRET:-}" ]; then
-  echo "ERROR: The environment variable FRONTEGG_CLIENT_SECRET is not set."
+if [ -z "${PIIANO_CLIENT_ID:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CLIENT_ID is not set."
   exit 1
 fi
 
-if [ -z "${PIIANO_CS_CUSTOMER_IDENTIFIER:-}" ]; then
-  echo "ERROR: The environment variable PIIANO_CS_CUSTOMER_IDENTIFIER is not set."
+if [ -z "${PIIANO_CUSTOMER_IDENTIFIER:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CUSTOMER_IDENTIFIER is not set."
   exit 1
 fi
 
-if [ -z "${PIIANO_CS_CUSTOMER_ENV:-}" ]; then
-  echo "ERROR: The environment variable PIIANO_CS_CUSTOMER_ENV is not set."
+if [ -z "${PIIANO_CUSTOMER_ENV:-}" ]; then
+  echo "ERROR: The environment variable PIIANO_CUSTOMER_ENV is not set."
   exit 1
 fi
 
@@ -51,7 +59,9 @@ fi
 
 # Get an access token.
 echo "[ ] Getting access token..."
-ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${FRONTEGG_CLIENT_ID}\",\"secret\": \"${FRONTEGG_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
+ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
+
+echo "[ ] Obtaining user ID ..."
 USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
 
 # Assume AWS role.
@@ -69,6 +79,7 @@ AWS_SECRET_ACCESS_KEY=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.Secre
 AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionToken')
 
 # Login to ECR.
+echo "[ ] Login into ECR ..."
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
@@ -84,8 +95,8 @@ docker run --rm \
     -e "PIIANO_CS_ONLINE=false" \
     -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
     -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
-    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CS_CUSTOMER_IDENTIFIER}" \
-    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CS_CUSTOMER_ENV}" \
+    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
+    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
     -v "$1:/source" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE}

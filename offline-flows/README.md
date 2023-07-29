@@ -25,10 +25,10 @@
 Using the [offline-flows.sh](./offline-flows.sh) script, run the following command:
 
 ```bash
-FRONTEGG_CLIENT_ID=<frontegg-client-id> \
-FRONTEGG_CLIENT_SECRET=<frontegg-client-secret> \
-PIIANO_CS_CUSTOMER_IDENTIFIER=<your-company-name> \
-PIIANO_CS_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
+PIIANO_CLIENT_ID=<client-id> \
+PIIANO_CLIENT_SECRET=<client-secret> \
+PIIANO_CUSTOMER_IDENTIFIER=<your-company-name> \
+PIIANO_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
 ./offline-flows.sh <absolute-path-to-your-code-base>
 ```
 
