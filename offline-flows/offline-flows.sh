@@ -68,7 +68,7 @@ echo "[ ] Getting AWS access..."
 ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --duration-seconds 3600 \
     --role-session-name "${USER_ID}" \
-    --role-arn arn:aws:iam::211558624535:role/scanner-prod-frontegg-offline-user \
+    --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
     --web-identity-token "${ACCESS_TOKEN}")
 
 # Set AWS credentials.
