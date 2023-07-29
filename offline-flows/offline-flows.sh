@@ -23,7 +23,6 @@ handle_error() {
     echo "An error occurred. Exit code: $exit_code"
 }
 
-
 trap handle_error ERR
 
 # Verify inputs.
@@ -61,7 +60,7 @@ fi
 echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
 
-echo "[ ] Obtaining user ID ..."
+echo "[ ] Obtaining user ID..."
 USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
 
 # Assume AWS role.
@@ -87,7 +86,7 @@ aws ecr get-login-password --region=us-east-2 | docker login --username AWS --pa
 
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
-docker run --rm \
+docker run --rm --name piiano-flows \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
