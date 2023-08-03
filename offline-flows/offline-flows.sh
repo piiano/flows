@@ -5,7 +5,7 @@ IFS=$'\n\t'
 ECR_REGISTRY=211558624535.dkr.ecr.us-east-2.amazonaws.com
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:cpu-0.2.655"
+PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:1"
 PORT=${PORT:=3002}
 
 is_absolute_path() {
