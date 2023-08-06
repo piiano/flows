@@ -30,4 +30,4 @@ You can connect your publically availale Git repositories or connect private Git
 ### Offline
 
 Piiano Flows is also provided as a standalone container that you can run locally on your code base.
-Follow [these instructions](./offline-flows) for working offline with Piiano Flows.
+Follow [these instructions](./cli) for working offline with Piiano Flows.

@@ -8,7 +8,7 @@
 - [curl](https://curl.se/)
 - [jq](https://jqlang.github.io/jq/download/)
 - [AWS CLI](https://aws.amazon.com/cli/)
-- The [flows-cli](./cli/flows-cli.sh) script.
+- The [flows-cli](./flows-cli.sh) script.
 
 ### Generate a Personal Token
 
@@ -23,7 +23,7 @@
 
 ### Run the Offline Flows
 
-Using the [flows-cli](./cli/flows-cli.sh) script, run the following command:
+Using the [flows-cli](./flows-cli.sh) script, run the following command:
 
 ```bash
 PIIANO_CLIENT_ID=<client-id> \
