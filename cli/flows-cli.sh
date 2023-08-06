@@ -31,6 +31,8 @@ if [ "$#" -ne 1 ]; then
   exit 1
 fi
 
+PATH_TO_SOURCE_CODE=$1
+
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
   echo "ERROR: The environment variable PIIANO_CLIENT_SECRET is not set."
   exit 1
@@ -96,6 +98,7 @@ docker run --rm --name piiano-flows \
     -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
-    -v "$1:/source" \
+    -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
-    ${PIIANO_CS_IMAGE}
+    ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS}
+    
