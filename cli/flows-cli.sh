@@ -6,7 +6,8 @@ ECR_REGISTRY=211558624535.dkr.ecr.us-east-2.amazonaws.com
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:1"
-PORT=${PORT:=3002}
+PORT=${PORT:=3000}
+EXTRA_TEST_PARAMS=${EXTRA_TEST_PARAMS:=""}
 
 is_absolute_path() {
   path="$1"
