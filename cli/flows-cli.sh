@@ -7,7 +7,6 @@ PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:1"
 PORT=${PORT:=3000}
-EXTRA_TEST_PARAMS=${EXTRA_TEST_PARAMS:=""}
 
 is_absolute_path() {
   path="$1"
@@ -27,12 +26,19 @@ handle_error() {
 trap handle_error ERR
 
 # Verify inputs.
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <absolute-path-to-source-code>"
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 <absolute-path-to-source-code> [test-params-internal]"
   exit 1
 fi
 
 PATH_TO_SOURCE_CODE=$1
+
+EXTRA_TEST_PARAMS=()
+if [ "$#" -gt 1 ]; then
+  shift
+  EXTRA_TEST_PARAMS=("$@")
+  echo "Testing mode with args ${EXTRA_TEST_PARAMS[@]}"
+fi
 
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
   echo "ERROR: The environment variable PIIANO_CLIENT_SECRET is not set."
@@ -54,12 +60,10 @@ if [ -z "${PIIANO_CUSTOMER_ENV:-}" ]; then
   exit 1
 fi
 
-if ! is_absolute_path "$1"; then
+if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   echo "ERROR: The path to the source code must be absolute."
   exit 1
 fi
-
-set -x
 
 # Get an access token.
 echo "[ ] Getting access token..."
@@ -74,7 +78,7 @@ ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --duration-seconds 3600 \
     --role-session-name "${USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
-    --web-identity-token "${ACCESS_TOKEN}")
+    --web-identity-token "${ACCESS_TOKEN}" --debug)
 
 # Set AWS credentials.
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE
@@ -91,6 +95,7 @@ aws ecr get-login-password --region=us-east-2 | docker login --username AWS --pa
 
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
+
 docker run --rm --name piiano-flows \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
@@ -103,5 +108,5 @@ docker run --rm --name piiano-flows \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
-    ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS}
+    ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
     
