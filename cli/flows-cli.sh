@@ -59,6 +59,8 @@ if ! is_absolute_path "$1"; then
   exit 1
 fi
 
+set -x
+
 # Get an access token.
 echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
