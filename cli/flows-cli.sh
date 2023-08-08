@@ -27,7 +27,7 @@ trap handle_error ERR
 
 # Verify inputs.
 if [ "$#" -lt 1 ]; then
-  echo "Usage: $0 <absolute-path-to-source-code> [test-params-internal]"
+  echo "Usage: $0 <absolute-path-to-source-code>"
   exit 1
 fi
 
