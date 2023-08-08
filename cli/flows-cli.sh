@@ -75,6 +75,7 @@ USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H 
 # Assume AWS role.
 echo "[ ] Getting AWS access..."
 ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
+    --region=us-east-2 \
     --duration-seconds 3600 \
     --role-session-name "${USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
