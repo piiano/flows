@@ -79,7 +79,7 @@ ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --duration-seconds 3600 \
     --role-session-name "${USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
-    --web-identity-token "${ACCESS_TOKEN}" --debug)
+    --web-identity-token "${ACCESS_TOKEN}")
 
 # Set AWS credentials.
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE
