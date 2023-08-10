@@ -30,7 +30,7 @@ PIIANO_CLIENT_ID=<client-id> \
 PIIANO_CLIENT_SECRET=<client-secret> \
 PIIANO_CUSTOMER_IDENTIFIER=<your-company-name> \
 PIIANO_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
-./offline-flows.sh <absolute-path-to-your-code-base>
+./flows-cli.sh <absolute-path-to-your-code-base>
 ```
 
 This script will run the Piiano Flows container and analyze the code you provided. The container will start a server on port 3000 by default. You can access the results by opening http://localhost:3000 in your browser.
