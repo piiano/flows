@@ -2,10 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-ECR_REGISTRY=211558624535.dkr.ecr.us-east-2.amazonaws.com
+PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE="${ECR_REGISTRY}/scanner-scan:1"
+PIIANO_CS_IMAGE=piiano/code-scanner:1
 PORT=${PORT:=3000}
 
 is_absolute_path() {
@@ -88,11 +88,11 @@ AWS_SECRET_ACCESS_KEY=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.Secre
 AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionToken')
 
 # Login to ECR.
-echo "[ ] Login into ECR ..."
+echo "[ ] Login into container registry..."
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
-aws ecr get-login-password --region=us-east-2 | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+aws secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
