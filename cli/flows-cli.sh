@@ -97,7 +97,9 @@ aws secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --regi
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
 
-docker run --rm --name piiano-flows \
+ulimit -n 2560
+
+docker run -it --rm --name piiano-flows --platform 'linux/amd64' \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
