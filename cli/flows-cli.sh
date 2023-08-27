@@ -97,9 +97,19 @@ aws secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --regi
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."
 
-ulimit -n 2560
+# Bump file limit to speed up maven download
+ulimit -n 2048
 
-docker run -it --rm --name piiano-flows --platform 'linux/amd64' \
+# Run with TTY if possible
+ADDTTY=""
+if [ -t 1 ]; then
+  ADDTTY="-it"
+  echo "[ ] Running in interactive mode"
+else
+  echo "[ ] Not a tty - will not run interactive"
+fi
+
+docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
