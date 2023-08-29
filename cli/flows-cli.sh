@@ -5,7 +5,7 @@ IFS=$'\n\t'
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE=piiano/code-scanner:endpoint-mvn_versoin-latest
+PIIANO_CS_IMAGE=piiano/code-scanner:1
 PORT=${PORT:=3000}
 
 is_absolute_path() {
