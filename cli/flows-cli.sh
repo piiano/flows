@@ -75,14 +75,14 @@ echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
 
 echo "[ ] Obtaining user ID..."
-PIIANO_CS_USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
+USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
 
 # Assume AWS role.
 echo "[ ] Getting AWS access..."
 ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --region=us-east-2 \
     --duration-seconds 3600 \
-    --role-session-name "${PIIANO_CS_USER_ID}" \
+    --role-session-name "${USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
     --web-identity-token "${ACCESS_TOKEN}")
 
@@ -114,16 +114,18 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
-PIIANO_CS_ONLINE=false
-PIIANO_ENV_VARS=$(cat <(env) <(set) | grep PIIANO_CS | sed 's/PIIANO_CS/-e PIIANO_CS/g')
-
 docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
     --hostname offline-flows-container \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
     -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
-    $PIIANO_ENV_VARS \
+    -e "PIIANO_CS_ONLINE=false" \
+    -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
+    -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
+    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
+    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
+    -e "PIIANO_CS_USER_ID=${USER_ID}" \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
