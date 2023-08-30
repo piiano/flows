@@ -20,7 +20,12 @@ is_absolute_path() {
 
 handle_error() {
     local exit_code="$?"
-    echo "An error occurred. Exit code: $exit_code"
+
+    if [[ $exit_code -eq 143 ]]; then
+        echo "Script was terminated by user. Exit code: $exit_code"
+    else
+        echo "An error occurred. Exit code: $exit_code"
+    fi
 }
 
 trap handle_error ERR
