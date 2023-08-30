@@ -75,14 +75,14 @@ echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail-with-body --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
 
 echo "[ ] Obtaining user ID..."
-USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
+PIIANO_CS_USER_ID=$(curl --silent --fail-with-body -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
 
 # Assume AWS role.
 echo "[ ] Getting AWS access..."
 ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
     --region=us-east-2 \
     --duration-seconds 3600 \
-    --role-session-name "${USER_ID}" \
+    --role-session-name "${PIIANO_CS_USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
     --web-identity-token "${ACCESS_TOKEN}")
 
@@ -125,7 +125,7 @@ docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
     -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
-    -e "PIIANO_CS_USER_ID=${USER_ID}" \
+    -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
