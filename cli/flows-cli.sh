@@ -110,6 +110,7 @@ else
 fi
 
 docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
+    --hostname offline-flows-container \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
     -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
