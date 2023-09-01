@@ -114,7 +114,7 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
-docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
+docker run ${ADDTTY} --rm --name piiano-flows  \
     --hostname offline-flows-container \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
@@ -130,4 +130,3 @@ docker run ${ADDTTY} --rm --name piiano-flows --platform 'linux/amd64' \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
-    
