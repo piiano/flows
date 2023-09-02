@@ -72,10 +72,8 @@ init_mac_prerequisites()
     fi
 
     # Poll Docker until it is ready
-    set -x
-    ps auxww
     for i in {1..60}; do
-        if docker ps ; then
+        if docker info >/dev/null 2>&1; then
             echo "Docker is ready."
             break
         else
