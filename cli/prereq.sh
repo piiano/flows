@@ -53,7 +53,14 @@ init_mac_prerequisites()
         echo "Homebrew is already installed."
     fi
 
-    brew install jq curl awscli
+    brew install jq curl
+
+    if ! command -v aws > /dev/null 2>&1; then
+        echo "aws cli not installed"
+        brew install awscli
+    else
+        echo "aws cli already installed"
+    fi
 
     # Installing Docker on macOS
     if ! command -v docker > /dev/null 2>&1; then
