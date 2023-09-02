@@ -64,24 +64,13 @@ init_mac_prerequisites()
 
     # Installing Docker on macOS
     if ! command -v docker > /dev/null 2>&1; then
-        echo "Docker is not installed. Installing..."
-        brew install --cask docker
-        open /Applications/Docker.app
+        echo "Docker is not installed. Installing Docker and Colima..."
+        brew install colima
+        brew install docker
+        colima start
     else
         echo "Docker is already installed."
-    fi
-
-    # Poll Docker until it is ready
-    for i in {1..60}; do
-        if docker info >/dev/null 2>&1; then
-            echo "Docker is ready."
-            break
-        else
-            echo "Waiting for Docker to be ready ($i)..."
-            sleep 3
-        fi
-    done
-    
+    fi    
 }
 
 
