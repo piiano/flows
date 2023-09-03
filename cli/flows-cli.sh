@@ -19,7 +19,7 @@ is_absolute_path() {
 }
 
 prereq_check() {
-  command -v "$1" >/dev/null 2>&1 || (echo "$1 is not installed. See https://github.com/piiano/flows/blob/main/cli/README.md for more details." && exit 1)
+  command -v "$1" >/dev/null 2>&1 || (echo "$1 is not installed. See https://github.com/piiano/flows/blob/main/cli/README.md for prerequisite list" && exit 1)
 }
 
 handle_error() {
