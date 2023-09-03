@@ -18,6 +18,10 @@ is_absolute_path() {
   fi
 }
 
+prereq_check() {
+  command -v "$1" >/dev/null 2>&1 || (echo "$1 is not installed. See https://github.com/piiano/flows/blob/main/cli/README.md for prerequisite list" && exit 1)
+}
+
 handle_error() {
     local exit_code="$?"
 
@@ -29,6 +33,10 @@ handle_error() {
 }
 
 trap handle_error ERR
+
+# Verify prerequisites.
+prereq_check curl
+prereq_check jq
 
 # Verify inputs.
 if [ "$#" -lt 1 ]; then
@@ -94,10 +102,11 @@ AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionTo
 
 # Login to ECR.
 echo "[ ] Login into container registry..."
-AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
-AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} \
-aws secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
+docker run -i --rm \
+    -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
+    -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
+    -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
+    amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Run flows.
 echo "[ ] Starting flows on port ${PORT}..."

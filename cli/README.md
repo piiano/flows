@@ -7,7 +7,6 @@
 - [Docker](https://docs.docker.com/get-docker/)
 - [curl](https://curl.se/)
 - [jq](https://jqlang.github.io/jq/download/)
-- [AWS CLI](https://aws.amazon.com/cli/)
 - The [flows-cli](./flows-cli.sh) script.
 
 ### Generate a Personal Token
