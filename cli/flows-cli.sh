@@ -123,6 +123,9 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
+SCAN_ID="generated_$(uuidgen)"
+echo "SCAN ID: $SCAN_ID"
+
 docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     --hostname offline-flows-container \
     -e AWS_REGION=us-east-2  \
@@ -135,6 +138,7 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
+    -e "PIIANO_CS_SCAN_ID=${SCAN_ID}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
