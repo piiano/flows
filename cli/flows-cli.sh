@@ -123,7 +123,7 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
-docker run ${ADDTTY} --rm --name piiano-flows  \
+docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     --hostname offline-flows-container \
     -e AWS_REGION=us-east-2  \
     -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
