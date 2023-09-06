@@ -78,6 +78,10 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
+if [ -z "${JAVA_VERSION:-}" ]; then
+  echo "Warning: The environment variable JAVA_VERSION is not set."
+fi
+
 # Get an access token.
 echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
@@ -135,6 +139,7 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
+    -e "PIIANO_CS_JAVA_VERSION=${JAVA_VERSION}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -p "${PORT}:3002" \
