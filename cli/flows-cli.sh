@@ -78,6 +78,12 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
+if [ -z "${PATH_TO_M2_REPOSITORY:-}" ]; then
+  echo "Note: The environment variable PATH_TO_M2_REPOSITORY will be set to."
+  export PATH_TO_M2_REPOSITORY=$(eval echo "~/.m2/repository")
+  echo $PATH_TO_M2_REPOSITORY
+fi
+
 # Get an access token.
 echo "[ ] Getting access token..."
 ACCESS_TOKEN=$(curl --silent --fail --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
@@ -137,5 +143,6 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
+    -v "${PATH_TO_M2_REPOSITORY}:/~/.m2/repository" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
