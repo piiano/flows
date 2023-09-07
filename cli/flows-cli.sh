@@ -78,10 +78,12 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
-if [ -z "${PATH_TO_M2_REPOSITORY:-}" ]; then
-  echo "Note: The environment variable PATH_TO_M2_REPOSITORY will be set to."
-  export PATH_TO_M2_REPOSITORY=$(eval echo "~/.m2/repository")
-  echo $PATH_TO_M2_REPOSITORY
+DEFAULT_M2_FOLDER="$HOME/.m2"
+if [ -z "${PIIANO_CS_M2_FOLDER:-}" ]; then
+  # if the user not deliver is own m2 folder - bind it to the default m2 folder
+  echo "Note: The environment variable PIIANO_CS_M2_FOLDER is not set"
+  mkdir -p "$DEFAULT_M2_FOLDER"
+  export PIIANO_CS_M2_FOLDER=$DEFAULT_M2_FOLDER
 fi
 
 # Get an access token.
@@ -143,6 +145,6 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
-    -v "${PATH_TO_M2_REPOSITORY}:/~/.m2/repository" \
+    -v "${PIIANO_CS_M2_FOLDER}:/root/.m2" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
