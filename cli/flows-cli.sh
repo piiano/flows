@@ -78,13 +78,11 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
-DEFAULT_M2_FOLDER="$HOME/.m2"
-if [ -z "${PIIANO_CS_M2_FOLDER:-}" ]; then
-  # if the user not deliver is own m2 folder - bind it to the default m2 folder
-  echo "Note: The environment variable PIIANO_CS_M2_FOLDER is not set"
-  mkdir -p "$DEFAULT_M2_FOLDER"
-  export PIIANO_CS_M2_FOLDER=$DEFAULT_M2_FOLDER
+export PIIANO_CS_M2_FOLDER=${PIIANO_CS_M2_FOLDER:-"$HOME/.m2"}
+if [ ! -d ${PIIANO_CS_M2_FOLDER} ] ; then
+   echo "Warning: creating folder ${PIIANO_CS_M2_FOLDER}"
 fi
+mkdir -p ${PIIANO_CS_M2_FOLDER}
 
 # Get an access token.
 echo "[ ] Getting access token..."
