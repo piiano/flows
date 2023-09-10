@@ -33,3 +33,9 @@ PIIANO_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
 ```
 
 This script will run the Piiano Flows container and analyze the code you provided. The container will start a server on port 3000 by default. You can access the results by opening http://localhost:3000 in your browser.
+
+### Optional Env vars:
+
+1. PIIANO_CS_JAVA_VERSION - specify the Java version that the repository use.
+2. PIIANO_CS_M2_FOLDER - use the specified M2 folder for the scan. if not provided - the script will use or create the default m2 folder at the home folder.
+
