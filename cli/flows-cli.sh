@@ -78,11 +78,16 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
+# Create a volume for M2
+VOL_NAME=piiano_flows_m2_vol
 export PIIANO_CS_M2_FOLDER=${PIIANO_CS_M2_FOLDER:-"$HOME/.m2"}
-if [ ! -d ${PIIANO_CS_M2_FOLDER} ] ; then
-   echo "Warning: creating folder ${PIIANO_CS_M2_FOLDER}"
+if docker volume inspect ${VOL_NAME} > /dev/null 2>&1; then
+  echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
+else
+  echo -n "[ ] Creating volume for M2: "
+  docker volume create ${VOL_NAME}
+  docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME}:/to alpine sh -c "cp -r /from/* /to/"
 fi
-mkdir -p ${PIIANO_CS_M2_FOLDER}
 
 # Get an access token.
 echo "[ ] Getting access token..."
@@ -143,6 +148,6 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
-    -v "${PIIANO_CS_M2_FOLDER}:/root/.m2" \
+    -v ${VOL_NAME}:"/root/.m2" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
