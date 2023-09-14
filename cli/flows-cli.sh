@@ -7,6 +7,7 @@ PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_IMAGE=piiano/code-scanner:offline-$(cat VERSION.txt)
 PORT=${PORT:=3000}
+VOL_NAME=piiano_flows_m2_vol
 
 is_absolute_path() {
   path="$1"
@@ -30,6 +31,33 @@ handle_error() {
     else
         echo "An error occurred. Exit code: $exit_code"
     fi
+}
+
+# check validity of PIIANO_CS_M2_FOLDER
+# If it exists, it needs to have files in it
+# If it doesn't exist try ~/.m2 and fallback to CWD
+set_maven_folder() {
+  if [ ! -z "${PIIANO_CS_M2_FOLDER:-}" ] ; then
+    if [ ! -d "${PIIANO_CS_M2_FOLDER}/repository" ] ; then
+      echo "ERROR: ${PIIANO_CS_M2_FOLDER}/repository does not exist"
+      exit 1
+    fi
+    echo "[ ] Using ${PIIANO_CS_M2_FOLDER}/repository .m2 folder"
+    return
+  else
+    echo "[ ] PIIANO_CS_M2_FOLDER is unset"
+  fi
+
+  if [ -d "${HOME}/.m2/repository" ] ; then
+    echo "[ ] Using ${HOME}/.m2 folder"
+    PIIANO_CS_M2_FOLDER=${HOME}/.m2
+  else
+    echo "[ ] Using .m2 repository in $(pwd)"
+    PIIANO_CS_M2_FOLDER=$(pwd)/.m2
+    mkdir -p ${PIIANO_CS_M2_FOLDER}/repository
+  fi
+
+  export PIIANO_CS_M2_FOLDER
 }
 
 trap handle_error ERR
@@ -78,11 +106,20 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
-export PIIANO_CS_M2_FOLDER=${PIIANO_CS_M2_FOLDER:-"$HOME/.m2"}
-if [ ! -d ${PIIANO_CS_M2_FOLDER} ] ; then
-   echo "Warning: creating folder ${PIIANO_CS_M2_FOLDER}"
+
+# Create a volume for M2
+
+
+if $(docker volume inspect ${VOL_NAME} > /dev/null 2>&1) ; then
+  echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
+else
+  echo -n "[ ] Creating volume for .m2: "
+  docker volume create ${VOL_NAME}
+
+  set_maven_folder
+  echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
+  docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME}:/to alpine sh -c "cp -r /from/* /to/"
 fi
-mkdir -p ${PIIANO_CS_M2_FOLDER}
 
 # Get an access token.
 echo "[ ] Getting access token..."
@@ -143,6 +180,6 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
-    -v "${PIIANO_CS_M2_FOLDER}:/root/.m2" \
+    -v ${VOL_NAME}:"/root/.m2" \
     -p "${PORT}:3002" \
     ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
