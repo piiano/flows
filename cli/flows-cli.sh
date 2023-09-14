@@ -7,6 +7,7 @@ PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_IMAGE=piiano/code-scanner:offline-$(cat VERSION.txt)
 PORT=${PORT:=3000}
+VOL_NAME=piiano_flows_m2_vol
 
 is_absolute_path() {
   path="$1"
@@ -41,7 +42,7 @@ set_maven_folder() {
       echo "ERROR: ${PIIANO_CS_M2_FOLDER}/repository does not exist"
       exit 1
     fi
-    echo "[ ] Using ${PIIANO_CS_M2_FOLDER}/repository M2 folder"
+    echo "[ ] Using ${PIIANO_CS_M2_FOLDER}/repository .m2 folder"
     return
   else
     echo "[ ] PIIANO_CS_M2_FOLDER is unset"
@@ -51,7 +52,7 @@ set_maven_folder() {
     echo "[ ] Using ${HOME}/.m2 folder"
     PIIANO_CS_M2_FOLDER=${HOME}/.m2
   else
-    echo "[ ] Using M2 repository in $(pwd)"
+    echo "[ ] Using .m2 repository in $(pwd)"
     PIIANO_CS_M2_FOLDER=$(pwd)/.m2
     mkdir -p ${PIIANO_CS_M2_FOLDER}/repository
   fi
@@ -107,16 +108,16 @@ fi
 
 
 # Create a volume for M2
-VOL_NAME=piiano_flows_m2_vol
+
 
 if $(docker volume inspect ${VOL_NAME} > /dev/null 2>&1) ; then
   echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
 else
-  echo -n "[ ] Creating volume for M2: "
+  echo -n "[ ] Creating volume for .m2: "
   docker volume create ${VOL_NAME}
 
   set_maven_folder
-  echo "[ ] Copying M2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
+  echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
   docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME}:/to alpine sh -c "cp -r /from/* /to/"
 fi
 
