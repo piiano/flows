@@ -51,8 +51,8 @@ set_maven_folder() {
     echo "[ ] Using ${HOME}/.m2 folder"
     PIIANO_CS_M2_FOLDER=${HOME}/.m2
   else
-    echo "[ ] Using M2 repository in `pwd`"
-    PIIANO_CS_M2_FOLDER=`pwd`/.m2
+    echo "[ ] Using M2 repository in $(pwd)"
+    PIIANO_CS_M2_FOLDER=$(pwd)/.m2
     mkdir -p ${PIIANO_CS_M2_FOLDER}/repository
   fi
 
