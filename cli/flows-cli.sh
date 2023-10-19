@@ -2,10 +2,11 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+VERSION_FILE=`dirname $0`/version.txt
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE=piiano/code-scanner:offline-$(cat VERSION.txt)
+PIIANO_CS_IMAGE=piiano/code-scanner:offline-$(cat ${VERSION_FILE})
 PORT=${PORT:=3000}
 VOL_NAME=piiano_flows_m2_vol
 
