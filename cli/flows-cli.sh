@@ -2,11 +2,15 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-VERSION_FILE=`dirname $0`/version.txt
+VERSION_FILE=$(dirname $0)/version.json
+ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
+VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
+
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_IMAGE=piiano/code-scanner:offline-$(cat ${VERSION_FILE})
+PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
+PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PORT=${PORT:=3000}
 VOL_NAME=piiano_flows_m2_vol
 
@@ -25,13 +29,19 @@ prereq_check() {
 }
 
 handle_error() {
-    local exit_code="$?"
+  local exit_code="$?"
 
-    if [[ $exit_code -eq 143 ]]; then
-        echo "Script was terminated by user. Exit code: $exit_code"
-    else
-        echo "An error occurred. Exit code: $exit_code"
-    fi
+  if [[ $exit_code -eq 143 ]]; then
+    echo "Script was terminated by user. Exit code: $exit_code"
+  else
+    echo "An error occurred. Exit code: $exit_code"
+  fi
+}
+
+cleanup_flow_viewer() {
+  echo "[ ] Stopping flows viewer ..."
+  docker stop piiano-flows-viewer
+  exit $?
 }
 
 # check validity of PIIANO_CS_M2_FOLDER
@@ -76,10 +86,12 @@ fi
 PATH_TO_SOURCE_CODE=$1
 
 EXTRA_TEST_PARAMS=()
+RUN_VIEWER="run"
 if [ "$#" -gt 1 ]; then
   shift
   EXTRA_TEST_PARAMS=("$@")
   echo "Testing mode with args ${EXTRA_TEST_PARAMS[@]}"
+  RUN_VIEWER="skip"
 fi
 
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
@@ -153,7 +165,7 @@ docker run -i --rm \
     amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Run flows.
-echo "[ ] Starting flows on port ${PORT}..."
+echo "[ ] Starting flows engine ..."
 
 # Bump file limit to speed up maven download
 ulimit -n 2048
@@ -182,5 +194,34 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
     -v ${VOL_NAME}:"/root/.m2" \
-    -p "${PORT}:3002" \
-    ${PIIANO_CS_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
+    ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
+
+if [ ${RUN_VIEWER} = "skip" ] ; then
+  echo "Skipping viewer"
+  exit 0
+fi
+
+OUTPUT_DIR=${PATH_TO_SOURCE_CODE}/piiano-scanner
+mkdir -p ${OUTPUT_DIR}/api
+cp -f ${OUTPUT_DIR}/report.json ${OUTPUT_DIR}/api/offline-report.json
+
+echo "[ ] Starting flows viewer on port ${PORT}..."
+
+docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer  \
+    --hostname offline-flows-container \
+    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
+    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
+    -v "${OUTPUT_DIR}/api:/api" \
+    -p "${PORT}:3000" \
+    ${PIIANO_CS_VIEWER_IMAGE}
+
+./wait-for-service.sh localhost:${PORT} 6
+if [ $? != "0" ] ; then
+  echo "Error: unable to reach the flows viewer. Check that the container is running"
+  exit 1
+else
+  trap cleanup_flow_viewer INT
+  echo "Flows viewer is ready at: http://localhost:${PORT}"
+  echo "Hit <CTRL-C> to stop viewer"
+  while : ; do sleep 3600 ; done
+fi
