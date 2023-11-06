@@ -110,7 +110,7 @@ fi
 if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
   echo "[ ] Scanning limited to sub directory: ${PIIANO_CS_SUB_DIR}"
   if [ ! -d "${PATH_TO_SOURCE_CODE}/${PIIANO_CS_SUB_DIR}" ] ; then
-    echo "ERROR: unable to find sub dir here: ${PATH_TO_SOURCE_CODE}/${PIIANO_CS_SUB_DIR}"
+    echo "ERROR: unable to find subdirectory: ${PATH_TO_SOURCE_CODE}/${PIIANO_CS_SUB_DIR}"
     exit 1
   fi
 fi
