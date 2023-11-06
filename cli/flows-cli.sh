@@ -107,10 +107,15 @@ if ! is_absolute_path "${PATH_TO_SOURCE_CODE}" ; then
   exit 1
 fi
 
+if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
+  echo "[ ] Scanning limited to sub directory: ${PIIANO_CS_SUB_DIR}"
+  if [ ! -d "${PATH_TO_SOURCE_CODE}/${PIIANO_CS_SUB_DIR}" ] ; then
+    echo "ERROR: unable to find subdirectory: ${PATH_TO_SOURCE_CODE}/${PIIANO_CS_SUB_DIR}"
+    exit 1
+  fi
+fi
 
 # Create a volume for M2
-
-
 if $(docker volume inspect ${VOL_NAME} > /dev/null 2>&1) ; then
   echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
 else

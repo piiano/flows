@@ -39,5 +39,7 @@ This script will run the Piiano Flows container and analyze the code you provide
 1. `PIIANO_CS_JAVA_VERSION` - Specifies the Java version used for building the repository. When not provided the Piiano Flows container will attempt to automatically detect the right version.  
 2. `PIIANO_CS_M2_FOLDER` - Specifies the Maven `m2` cache folder to be used during the scan. When not provided the script will first attempt to use the default `.m2` folder under the user's home directory and verify that it has a `repository` sub folder. If that doesn't exist, the script will fallback to use the current working directory instead.
 3. `PIIANO_CS_DB_OPTIONS` - Options for building the internal code database. Supported values are: `auto`, `default` and `custom`. 
-4. `PIIANO_CS_BUILD_COMMAND` - Applicable when `PIIANO_CS_DB_OPTIONS=custom`. Includes the command used to build the source repo. 
+4. `PIIANO_CS_BUILD_COMMAND` - Applicable when `PIIANO_CS_DB_OPTIONS=custom`. Includes the command used to build the source repo.
+5. `PIIANO_CS_SUB_DIR` - Scan only a sub directory within the git repository. Useful for example in a mono-repo case.
+
 
