@@ -39,7 +39,7 @@ handle_error() {
 }
 
 cleanup_flow_viewer() {
-  echo "[ ] Stopping flows viewer ..."
+  echo "[ ] Stopping flows viewer..."
   docker stop piiano-flows-viewer
   exit $?
 }
