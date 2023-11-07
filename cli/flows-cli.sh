@@ -40,7 +40,7 @@ handle_error() {
 
 cleanup_flow_viewer() {
   echo "[ ] Stopping flows viewer..."
-  docker stop piiano-flows-viewer
+  docker stop piiano-flows-viewer > /dev/null
   exit $?
 }
 
@@ -216,12 +216,7 @@ docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer  \
     ${PIIANO_CS_VIEWER_IMAGE}
 
 ./wait-for-service.sh localhost:${PORT} 6
-if [ $? != "0" ] ; then
-  echo "Error: unable to reach the flows viewer. Check that the container is running"
-  exit 1
-else
-  trap cleanup_flow_viewer INT
-  echo "Flows viewer is ready at: http://localhost:${PORT}"
-  echo "Hit <CTRL-C> to stop viewer"
-  while : ; do sleep 3600 ; done
-fi
+trap cleanup_flow_viewer INT
+echo "Flows viewer is ready at: http://localhost:${PORT}"
+echo "Hit <CTRL-C> to stop viewer"
+while : ; do sleep 3600 ; done

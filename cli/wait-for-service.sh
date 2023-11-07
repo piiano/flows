@@ -1,10 +1,13 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
 # Set service_url to the first parameter or default to "http://localhost:3000"
 service_url="${1:-http://localhost:3000}"
 
 # Set max_attempts to the second parameter or default to 10
 max_attempts="${2:-10}"
+SLEEP_BETWEEN_ATTEMPTS_SECS=10
 
 # Poll the service until it's up or until the maximum number of attempts is reached
 attempt_counter=0
@@ -21,7 +24,7 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
       echo "Max attempts reached. Exiting."
       exit 1
     fi
-    sleep 10
+    sleep ${SLEEP_BETWEEN_ATTEMPTS_SECS}
   fi
 done
 echo "Service is not up. Give up"
