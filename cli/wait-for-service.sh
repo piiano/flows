@@ -15,7 +15,7 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
     echo "Service is up and returned HTTP 200"
     exit 0
   else
-    echo "Service returned HTTP $response. Retrying ${attempt_counter} ..."
+    echo "Service returned HTTP $response. Retrying ${attempt_counter}..."
     ((attempt_counter++))
     if [ "$attempt_counter" -eq "$max_attempts" ]; then
       echo "Max attempts reached. Exiting."
