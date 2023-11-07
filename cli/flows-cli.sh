@@ -165,7 +165,7 @@ docker run -i --rm \
     amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Run flows.
-echo "[ ] Starting flows engine ..."
+echo "[ ] Starting flows engine..."
 
 # Bump file limit to speed up maven download
 ulimit -n 2048
