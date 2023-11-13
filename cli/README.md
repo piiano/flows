@@ -12,7 +12,8 @@
 ### Generate a Personal Token
 
 1. Register for a free account at https://scanner.piiano.io
-2. After receiving access, login to https://scanner.piiano.io and create a Personal Token:
+2. Reach Piiano at support@piiano.com with a request for offline flows.
+3. After receiving access, login to https://scanner.piiano.io and create a Personal Token:
    1. Click on your user icon in the top right corner.
    2. Click on "Settings".
    3. Click on "Personal Tokens".
@@ -28,7 +29,7 @@ PIIANO_CLIENT_ID=<client-id> \
 PIIANO_CLIENT_SECRET=<client-secret> \
 PIIANO_CUSTOMER_IDENTIFIER=<your-company-name> \
 PIIANO_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
-   PIIANO_CS_DB_OPTIONS=auto \
+PIIANO_CS_DB_OPTIONS=auto \
 ./flows-cli.sh <absolute-path-to-your-code-base>
 ```
 
