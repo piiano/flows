@@ -12,8 +12,7 @@
 ### Generate a Personal Token
 
 1. Register for a free account at https://scanner.piiano.io
-2. Reach Piiano at support@piiano.com with a request for offline flows.
-3. After receiving access, login to https://scanner.piiano.io and create a Personal Token:
+2. After receiving access, login to https://scanner.piiano.io and create a Personal Token:
    1. Click on your user icon in the top right corner.
    2. Click on "Settings".
    3. Click on "Personal Tokens".
