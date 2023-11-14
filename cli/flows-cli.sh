@@ -14,7 +14,8 @@ PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 
 PORT=${PORT:=3000}
-VOL_NAME=piiano_flows_m2_vol
+VOL_NAME_M2=piiano_flows_m2_vol
+VOL_NAME_GRADLE=piiano_flows_gradle_vol
 
 is_absolute_path() {
   path="$1"
@@ -42,8 +43,8 @@ handle_error() {
 
 cleanup_flow_viewer() {
   echo "[ ] Stopping flows viewer..."
-  docker stop piiano-flows-viewer > /dev/null
-  exit $?
+  docker stop piiano-flows-viewer > /dev/null || true
+  exit 0
 }
 
 # check validity of PIIANO_CS_M2_FOLDER
@@ -71,6 +72,33 @@ set_maven_folder() {
   fi
 
   export PIIANO_CS_M2_FOLDER
+}
+
+# check validity of PIIANO_CS_M2_GRADLE
+# If it exists, it needs to have files in it
+# If it doesn't exist try ~/.gradle and fallback to CWD
+set_gradle_folder() {
+  if [ ! -z "${PIIANO_CS_GRADLE_FOLDER:-}" ] ; then
+    if [ ! -d "${PIIANO_CS_GRADLE_FOLDER}/caches" ] ; then
+      echo "ERROR: ${PIIANO_CS_GRADLE_FOLDER}/caches does not exist"
+      exit 1
+    fi
+    echo "[ ] Using ${PIIANO_CS_GRADLE_FOLDER} gradle folder"
+    return
+  else
+    echo "[ ] PIIANO_CS_GRADLE_FOLDER is unset"
+  fi
+
+  if [ -d "${HOME}/.gradle/caches" ] ; then
+    echo "[ ] Using ${HOME}/.gradle/caches folder"
+    PIIANO_CS_GRADLE_FOLDER=${HOME}/.gradle
+  else
+    echo "[ ] Using .gradle in $(pwd)"
+    PIIANO_CS_GRADLE_FOLDER=$(pwd)/.gradle
+    mkdir -p ${PIIANO_CS_GRADLE_FOLDER}/caches
+  fi
+
+  export PIIANO_CS_GRADLE_FOLDER
 }
 
 trap handle_error ERR
@@ -130,15 +158,27 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
 fi
 
 # Create a volume for M2
-if $(docker volume inspect ${VOL_NAME} > /dev/null 2>&1) ; then
-  echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
+if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
+  echo "[ ] Reusing volume ${VOL_NAME_M2}. (to remove: docker volume rm ${VOL_NAME_M2})"
 else
   echo -n "[ ] Creating volume for .m2: "
-  docker volume create ${VOL_NAME}
+  docker volume create ${VOL_NAME_M2}
 
   set_maven_folder
   echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
-  docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME}:/to alpine sh -c "cp -r /from/* /to/"
+  docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME_M2}:/to alpine sh -c "cp -r /from/* /to/"
+fi
+
+# Create a volume for Gradle
+if $(docker volume inspect ${VOL_NAME_GRADLE} > /dev/null 2>&1) ; then
+  echo "[ ] Reusing volume ${VOL_NAME_GRADLE}. (to remove: docker volume rm ${VOL_NAME_GRADLE})"
+else
+  echo -n "[ ] Creating volume for .gradle: "
+  docker volume create ${VOL_NAME_GRADLE}
+
+  set_gradle_folder
+  echo "[ ] Copying .gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the volume"
+  docker run --rm -v ${PIIANO_CS_GRADLE_FOLDER}:/from -v ${VOL_NAME_GRADLE}:/to alpine sh -c "cp -r /from/* /to/"
 fi
 
 # Get an access token.
@@ -171,6 +211,10 @@ docker run -i --rm \
     -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
     amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
+# Cleanup previous run (will be removed when supporting multiple runs)
+docker stop piiano-flows > /dev/null 2>&1 || true
+docker stop piiano-flows-viewer > /dev/null 2>&1  || true
+
 # Run flows.
 echo "[ ] Starting flows engine..."
 
@@ -201,7 +245,8 @@ docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
     -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
     --env-file <(env | grep PIIANO_CS) \
     -v "${PATH_TO_SOURCE_CODE}:/source" \
-    -v ${VOL_NAME}:"/root/.m2" \
+    -v ${VOL_NAME_M2}:"/root/.m2" \
+    -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
     ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 
 if [ ${RUN_VIEWER} = "skip" ] ; then
