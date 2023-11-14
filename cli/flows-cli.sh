@@ -95,7 +95,7 @@ set_gradle_folder() {
   else
     echo "[ ] Using .gradle in $(pwd)"
     PIIANO_CS_GRADLE_FOLDER=$(pwd)/.gradle
-    mkdir -p ${PIIANO_CS_GRADLE_FOLDER}
+    mkdir -p ${PIIANO_CS_GRADLE_FOLDER}/caches
   fi
 
   export PIIANO_CS_GRADLE_FOLDER
