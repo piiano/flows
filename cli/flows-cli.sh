@@ -2,6 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+MAX_NUM_OF_FILES=1024000
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
@@ -158,6 +159,9 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
   fi
 fi
 
+# Bump file limit to for copying and downloads
+ulimit -n 2048
+
 # Create a volume for M2
 if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
   echo "[ ] Reusing volume ${VOL_NAME_M2}. (to remove: docker volume rm ${VOL_NAME_M2})"
@@ -224,16 +228,12 @@ if [ -t 1 ]; then
 else
   echo "[ ] Not a tty - will not run interactive"
 fi
-  
-# Bump file limit to speed up download of dependencies
-ulimit -n 2048
 
 # Run flows.
 if [ ${RUN_ENGINE} = "skip" ] ; then
   echo "[ ] Skipping engine"
 else
   echo "[ ] Starting flows engine..."
-
   docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
       --hostname offline-flows-container \
       -e AWS_REGION=us-east-2  \
@@ -251,6 +251,7 @@ else
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
       -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
+      --ulimit nofile=${MAX_NUM_OF_FILES}:${MAX_NUM_OF_FILES} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
