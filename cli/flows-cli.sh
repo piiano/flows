@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-MAX_NUM_OF_FILES=1024000
+MAX_NUM_OF_FILES=10240
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
