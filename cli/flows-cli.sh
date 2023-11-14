@@ -158,7 +158,6 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
 fi
 
 # Create a volume for M2
-  echo "[ ] Reusing volume ${VOL_NAME}. (to remove: docker volume rm ${VOL_NAME})"
 if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
   echo "[ ] Reusing volume ${VOL_NAME_M2}. (to remove: docker volume rm ${VOL_NAME_M2})"
 else
