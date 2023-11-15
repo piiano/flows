@@ -2,6 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+MAX_NUM_OF_FILES=10240
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
@@ -116,7 +117,8 @@ fi
 PATH_TO_SOURCE_CODE=$1
 
 EXTRA_TEST_PARAMS=()
-RUN_VIEWER="run"
+RUN_VIEWER=${RUN_VIEWER:-"run"}
+RUN_ENGINE=${RUN_ENGINE:-"run"}
 if [ "$#" -gt 1 ]; then
   shift
   EXTRA_TEST_PARAMS=("$@")
@@ -156,6 +158,9 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
     exit 1
   fi
 fi
+
+# Bump file limit to for copying and downloads
+ulimit -n 2048
 
 # Create a volume for M2
 if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
@@ -215,12 +220,6 @@ docker run -i --rm \
 docker stop piiano-flows > /dev/null 2>&1 || true
 docker stop piiano-flows-viewer > /dev/null 2>&1  || true
 
-# Run flows.
-echo "[ ] Starting flows engine..."
-
-# Bump file limit to speed up maven download
-ulimit -n 2048
-
 # Run with TTY if possible
 ADDTTY=""
 if [ -t 1 ]; then
@@ -230,24 +229,31 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
-docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
-    --hostname offline-flows-container \
-    -e AWS_REGION=us-east-2  \
-    -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-    -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-    -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
-    -e "PIIANO_CS_ONLINE=false" \
-    -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
-    -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
-    -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
-    -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
-    -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
-    -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
-    --env-file <(env | grep PIIANO_CS) \
-    -v "${PATH_TO_SOURCE_CODE}:/source" \
-    -v ${VOL_NAME_M2}:"/root/.m2" \
-    -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
-    ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
+# Run flows.
+if [ ${RUN_ENGINE} = "skip" ] ; then
+  echo "[ ] Skipping engine"
+else
+  echo "[ ] Starting flows engine..."
+  docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
+      --hostname offline-flows-container \
+      -e AWS_REGION=us-east-2  \
+      -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+      -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+      -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
+      -e "PIIANO_CS_ONLINE=false" \
+      -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
+      -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
+      -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
+      -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
+      -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
+      -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
+      --env-file <(env | grep PIIANO_CS) \
+      -v "${PATH_TO_SOURCE_CODE}:/source" \
+      -v ${VOL_NAME_M2}:"/root/.m2" \
+      -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
+      --ulimit nofile=${MAX_NUM_OF_FILES}:${MAX_NUM_OF_FILES} \
+      ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
+fi
 
 if [ ${RUN_VIEWER} = "skip" ] ; then
   echo "Skipping viewer"
@@ -256,6 +262,10 @@ fi
 
 OUTPUT_DIR=${PATH_TO_SOURCE_CODE}/piiano-scanner
 mkdir -p ${OUTPUT_DIR}/api
+if [ ! -e ${OUTPUT_DIR}/report.json ] ; then
+  echo "ERROR: expecting report.json file to be at ${OUTPUT_DIR}/report.json"
+  exit 1
+fi
 cp -f ${OUTPUT_DIR}/report.json ${OUTPUT_DIR}/api/offline-report.json
 
 echo "[ ] Starting flows viewer on port ${PORT}..."
