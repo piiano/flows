@@ -8,7 +8,7 @@ service_url="${1:-http://localhost:3000}"
 max_attempts="${2:-10}"
 
 # Third, optional argument - PID to follow. If it dies, exit
-PID="${3:-'0'}"
+PID="${3:-0}"
 
 SLEEP_BETWEEN_ATTEMPTS_SECS=3
 
@@ -32,7 +32,7 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
             echo "Max attempts reached. Exiting."
             exit 1
         fi
-      if [ "${PID}" != "0" ] ; then
+      if [ ${PID} -ne 0 ] ; then
           if ! ps -p ${PID} > /dev/null 2>&1 ; then
             echo "Process ${PID} has died, exit."
             exit 1
