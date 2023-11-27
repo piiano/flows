@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+#set -euo pipefail
 IFS=$'\n\t'
 
 # First argument is the service URL that defaults to "http://localhost:3000"
@@ -29,7 +29,7 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
         if [ "$attempt_counter" -eq "$max_attempts" ]; then
             echo "Max attempts reached. Exiting."
             exit 1
-      fi
+        fi
       if [ "${PID}" != "0" ] ; then
           if ! ps -p ${PID} > /dev/null 2>&1 ; then
             echo "Process ${PID} has died, exit."
