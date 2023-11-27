@@ -270,10 +270,10 @@ fi
 # Create a report directory with a placeholder for 'previous'
 # Move all existing reports into a unique 'previous' directory
 REPORT_DIR=${BASEDIR}/.report
-CURRENT_PID=$$
-mkdir -p ${REPORT_DIR}/${CURRENT_PID}
+OLDER_FOLDER=$(date "+%y%m%d_%H%M%S")
+mkdir -p ${REPORT_DIR}/${OLDER_FOLDER}
 mkdir -p ${REPORT_DIR}/api
-mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${CURRENT_PID} > /dev/null >&2 || true
+mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${OLDER_FOLDER} > /dev/null >&2 || true
 cp ${SCAN_OUTPUT_DIR}/report.json ${REPORT_DIR}/api/offline-report.json
 
 echo "[ ] Starting flows viewer on port ${PORT}..."
