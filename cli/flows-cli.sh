@@ -273,7 +273,7 @@ REPORT_DIR=${BASEDIR}/.report
 CURRENT_PID=$$
 mkdir -p ${REPORT_DIR}/${CURRENT_PID}
 mkdir -p ${REPORT_DIR}/api
-mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${CURRENT_PID} /dev/null >&2 || true
+mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${CURRENT_PID} > /dev/null >&2 || true
 cp ${SCAN_OUTPUT_DIR}/report.json ${REPORT_DIR}/api/offline-report.json
 
 echo "[ ] Starting flows viewer on port ${PORT}..."
@@ -286,7 +286,7 @@ docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer  \
     -p "${PORT}:3000" \
     ${PIIANO_CS_VIEWER_IMAGE}
 
-${BASEDIR}/wait-for-service.sh localhost:${PORT} 6
+${BASEDIR}/wait-for-service.sh localhost:${PORT} 5 > /dev/null
 trap cleanup_flow_viewer INT
 echo "Flows viewer is ready at: http://localhost:${PORT}"
 echo "Hit <CTRL-C> to stop viewer"

@@ -23,6 +23,10 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
         echo "Service is up and returned HTTP 200"
         exit 0
     else
+        # print only every 10 messages - do not flood the console
+        if [ $((attempt_counter % 10)) -eq 0 ]; then
+          echo "Service returned HTTP $response. Retrying ${attempt_counter}..."
+        fi
         ((attempt_counter++))
         if [ "$attempt_counter" -eq "$max_attempts" ]; then
             echo "Max attempts reached. Exiting."
@@ -34,7 +38,6 @@ while [ "$attempt_counter" -lt "$max_attempts" ]; do
             exit 1
           fi
       fi
-      echo "Service returned HTTP $response. Retrying ${attempt_counter}..."
       sleep ${SLEEP_BETWEEN_ATTEMPTS_SECS}
     fi
 done
