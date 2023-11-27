@@ -2,6 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+BASEDIR=$(dirname $0)
 MAX_NUM_OF_FILES=10240
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
@@ -268,11 +269,11 @@ fi
 
 # Create a report directory with a placeholder for 'previous'
 # Move all existing reports into a unique 'previous' directory
-REPORT_DIR=$(pwd)/.report
+REPORT_DIR=${BASEDIR}/.report
 CURRENT_PID=$$
 mkdir -p ${REPORT_DIR}/${CURRENT_PID}
 mkdir -p ${REPORT_DIR}/api
-mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${CURRENT_PID} || true
+mv ${REPORT_DIR}/api/*.json ${REPORT_DIR}/${CURRENT_PID} /dev/null >&2 || true
 cp ${SCAN_OUTPUT_DIR}/report.json ${REPORT_DIR}/api/offline-report.json
 
 echo "[ ] Starting flows viewer on port ${PORT}..."
@@ -285,7 +286,7 @@ docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer  \
     -p "${PORT}:3000" \
     ${PIIANO_CS_VIEWER_IMAGE}
 
-./wait-for-service.sh localhost:${PORT} 6
+${BASEDIR}/wait-for-service.sh localhost:${PORT} 6
 trap cleanup_flow_viewer INT
 echo "Flows viewer is ready at: http://localhost:${PORT}"
 echo "Hit <CTRL-C> to stop viewer"

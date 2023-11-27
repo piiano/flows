@@ -1,5 +1,4 @@
 #!/bin/bash
-#set -euo pipefail
 IFS=$'\n\t'
 
 # First argument is the service URL that defaults to "http://localhost:3000"
@@ -16,7 +15,6 @@ SLEEP_BETWEEN_ATTEMPTS_SECS=3
 echo "Wait for service on ${service_url} for ${max_attempts} and PID=${PID}"
 
 # Poll the service until it's up or until the maximum number of attempts is reached
-set -x
 attempt_counter=0
 while [ "$attempt_counter" -lt "$max_attempts" ]; do
     response=$(curl --write-out '%{http_code}' --silent --output /dev/null "$service_url" || true)
