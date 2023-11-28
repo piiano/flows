@@ -88,21 +88,22 @@ check_jars()
 
 check_os()
 {
+    msg "OS" "$(uname)"
     if [ $(uname) = "Darwin" ] ; then
         IS_MAC=true
         silicon=$(sysctl -n machdep.cpu.brand_string)
-        msg "Hardware" "${silicon}"
+        msg "HW" "${silicon}"
         cpu_num=$(sysctl -n machdep.cpu.core_count)
-        msg "Hardware" "${cpu_num}"
-        msg "Hardware" "Architecture $(uname -m)"
+        msg "HW" "${cpu_num}"
+        msg "HW" "Architecture $(uname -m)"
     else
         IS_MAC=false
         # Assume Linux based / WSL
         cpu_num=$(cat /proc/cpuinfo | grep 'CPU architecture' | uniq)
-        msg "Hardware" "${cpu_num}"
+        msg "HW\t" "${cpu_num}"
         mem_info=$(cat /proc/meminfo | grep 'MemTotal')
-        msg "Hardware" "${mem_info}"
-        msg "Hardware" "Architecture $(uname -m)"
+        msg "HW" "${mem_info}"
+        msg "HW" "Architecture $(uname -m)"
         msg "OS details" "/etc/os-release:"
         cat /etc/os-release
     fi 
