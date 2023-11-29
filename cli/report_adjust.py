@@ -52,7 +52,7 @@ def filter_functions(report):
     filtered = 0
     for artifact in report['results']['artifacts']:
         if artifact['artifact_type'] == 'rest_api':
-            rest_api_files.append(artifact["location"]["file_path"])
+            rest_api_files.add(artifact["code_ref"]["file_path"])
 
     for artifact in report['results']['artifacts']:
         if artifact['artifact_type'] == 'functions':
