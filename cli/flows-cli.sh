@@ -15,7 +15,8 @@ PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
-
+FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
+FLOWS_SKIP_VIEWER=${FLOWS_SKIP_VIEWER:-false}
 PORT=${PORT:=3000}
 VOL_NAME_M2=piiano_flows_m2_vol
 VOL_NAME_GRADLE=piiano_flows_gradle_vol
@@ -119,13 +120,11 @@ fi
 PATH_TO_SOURCE_CODE=$1
 
 EXTRA_TEST_PARAMS=()
-RUN_VIEWER=${RUN_VIEWER:-"run"}
-RUN_ENGINE=${RUN_ENGINE:-"run"}
 if [ "$#" -gt 1 ]; then
   shift
   EXTRA_TEST_PARAMS=("$@")
   echo "Testing mode with args ${EXTRA_TEST_PARAMS[@]}"
-  RUN_VIEWER="skip"
+  FLOWS_SKIP_VIEWER=true
 fi
 
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
@@ -232,7 +231,7 @@ else
 fi
 
 # Run flows.
-if [ ${RUN_ENGINE} = "skip" ] ; then
+if [ ${FLOWS_SKIP_ENGINE} = "true" ] ; then
   echo "[ ] Skipping engine"
 else
   echo "[ ] Starting flows engine..."
@@ -257,7 +256,7 @@ else
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
-if [ ${RUN_VIEWER} = "skip" ] ; then
+if [ ${FLOWS_SKIP_VIEWER} = "true" ] ; then
   echo "Skipping viewer"
   exit 0
 fi

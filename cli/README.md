@@ -43,5 +43,6 @@ This script will run the Piiano Flows container and analyze the code you provide
 4. `PIIANO_CS_DB_OPTIONS` - Options for building the internal code database. Supported values are: `auto`, `default` and `custom`. 
 5. `PIIANO_CS_BUILD_COMMAND` - Applicable when `PIIANO_CS_DB_OPTIONS=custom`. Includes the command used to build the source repo.
 6. `PIIANO_CS_SUB_DIR` - Scan only a sub directory within the git repository. Useful for example in a mono-repo case.
-
+7. `FLOWS_SKIP_ENGINE` - Setting to `true` skips the engine and runs just the viewer on the existing report (This variable is only used by the flows-cli script).
+8. `FLOWS_SKIP_VIEWER` - Setting to `true` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script). 
 
