@@ -3,7 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 
 BASEDIR=$(dirname $0)
-MAX_NUM_OF_FILES=10240
+MAX_NUM_OF_FILES_LOCAL=10240
+MAX_NUM_OF_FILES_CONTAINER=10000
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
@@ -161,7 +162,7 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
 fi
 
 # Bump file limit to for copying and downloads
-ulimit -n 2048
+ulimit -n ${MAX_NUM_OF_FILES_LOCAL}
 
 # Create a volume for M2
 if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
@@ -252,7 +253,7 @@ else
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
       -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
-      --ulimit nofile=${MAX_NUM_OF_FILES}:${MAX_NUM_OF_FILES} \
+      --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
