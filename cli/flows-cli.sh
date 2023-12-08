@@ -15,6 +15,7 @@ PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 
+UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
 VOL_NAME_M2=piiano_flows_m2_vol
 VOL_NAME_GRADLE=piiano_flows_gradle_vol
@@ -45,7 +46,7 @@ handle_error() {
 
 cleanup_flow_viewer() {
   echo "[ ] Stopping flows viewer..."
-  docker stop piiano-flows-viewer > /dev/null || true
+  docker stop piiano-flows-viewer-${UNIQUE_RUN_ID} > /dev/null || true
   exit 0
 }
 
@@ -234,8 +235,8 @@ fi
 if [ ${RUN_ENGINE} = "skip" ] ; then
   echo "[ ] Skipping engine"
 else
-  echo "[ ] Starting flows engine..."
-  docker run ${ADDTTY} --rm --pull=always --name piiano-flows  \
+  echo "[ ] Starting flows engine (run id ${UNIQUE_RUN_ID})..."
+  docker run ${ADDTTY} --rm --pull=always --name piiano-flows-engine-${UNIQUE_RUN_ID}  \
       --hostname offline-flows-container \
       -e AWS_REGION=us-east-2  \
       -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
@@ -278,7 +279,7 @@ cp ${SCAN_OUTPUT_DIR}/report.json ${REPORT_DIR}/api/offline-report.json
 
 echo "[ ] Starting flows viewer on port ${PORT}..."
 
-docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer  \
+docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer-${UNIQUE_RUN_ID}  \
     --hostname offline-flows-container \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
