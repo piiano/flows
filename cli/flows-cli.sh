@@ -220,8 +220,7 @@ docker run -i --rm \
     amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Cleanup previous run (will be removed when supporting multiple runs)
-docker stop piiano-flows > /dev/null 2>&1 || true
-docker stop piiano-flows-viewer > /dev/null 2>&1  || true
+docker ps -q --filter "name=piiano-flows" | xargs -r docker stop > /dev/null 2>&1 || true
 
 # Run with TTY if possible
 ADDTTY=""
