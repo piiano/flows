@@ -3,7 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 
 BASEDIR=$(dirname $0)
-MAX_NUM_OF_FILES=10240
+MAX_NUM_OF_FILES_LOCAL=10240
+MAX_NUM_OF_FILES_CONTAINER=10000
 VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
@@ -14,6 +15,8 @@ PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
 PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
+FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
+FLOWS_SKIP_VIEWER=${FLOWS_SKIP_VIEWER:-false}
 
 UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
@@ -119,13 +122,11 @@ fi
 PATH_TO_SOURCE_CODE=$1
 
 EXTRA_TEST_PARAMS=()
-RUN_VIEWER=${RUN_VIEWER:-"run"}
-RUN_ENGINE=${RUN_ENGINE:-"run"}
 if [ "$#" -gt 1 ]; then
   shift
   EXTRA_TEST_PARAMS=("$@")
   echo "Testing mode with args ${EXTRA_TEST_PARAMS[@]}"
-  RUN_VIEWER="skip"
+  FLOWS_SKIP_VIEWER=true
 fi
 
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
@@ -162,7 +163,7 @@ if [ ! -z "${PIIANO_CS_SUB_DIR:-}" ]; then
 fi
 
 # Bump file limit to for copying and downloads
-ulimit -n 2048
+ulimit -n ${MAX_NUM_OF_FILES_LOCAL}
 
 # Create a volume for M2
 if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
@@ -232,7 +233,7 @@ else
 fi
 
 # Run flows.
-if [ ${RUN_ENGINE} = "skip" ] ; then
+if [ ${FLOWS_SKIP_ENGINE} = "true" ] ; then
   echo "[ ] Skipping engine"
 else
   echo "[ ] Starting flows engine (run id ${UNIQUE_RUN_ID})..."
@@ -253,11 +254,11 @@ else
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
       -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
-      --ulimit nofile=${MAX_NUM_OF_FILES}:${MAX_NUM_OF_FILES} \
+      --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
-if [ ${RUN_VIEWER} = "skip" ] ; then
+if [ ${FLOWS_SKIP_VIEWER} = "true" ] ; then
   echo "Skipping viewer"
   exit 0
 fi
