@@ -3,6 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 BASEDIR=$(dirname $0)
+REPORT_DIR=${BASEDIR}/.flows-reports
 MAX_NUM_OF_FILES_LOCAL=10240
 MAX_NUM_OF_FILES_CONTAINER=10000
 VERSION_FILE=$(dirname $0)/version.json
@@ -17,11 +18,14 @@ PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
 FLOWS_SKIP_VIEWER=${FLOWS_SKIP_VIEWER:-false}
-
+FLOWS_FORCE_CLEANUP=${FLOWS_FORCE_CLEANUP:-false}
 UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
 VOL_NAME_M2=piiano_flows_m2_vol
 VOL_NAME_GRADLE=piiano_flows_gradle_vol
+FLOWS_PORT=3000
+PORT_START_RANGE=${FLOWS_PORT}
+PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 
 is_absolute_path() {
   path="$1"
@@ -107,11 +111,41 @@ set_gradle_folder() {
   export PIIANO_CS_GRADLE_FOLDER
 }
 
+set_available_port()
+{
+  for ((port=${PORT_START_RANGE}; port<=${PORT_END_RANGE}; port++)); do
+      # Check if the port is in use using nc
+      if ! nc -z localhost $port > /dev/null 2>&1; then
+          PORT=${port}
+          return
+      fi
+  done
+
+  echo "ERROR: unable to find an available port in the range: ${PORT_START_RANGE} - ${PORT_END_RANGE}"
+  exit 1
+}
+
+initial_cleanup()
+{
+    if [ ${FLOWS_FORCE_CLEANUP} = "true" ] ; then
+        echo "[ ] Clenup of previous reports"
+        rm -rf ${REPORT_DIR}
+
+        # Cleanup previous run (will be removed when supporting multiple runs)
+        echo "[ ] Removing previous containers"
+        docker ps -q --filter "name=piiano-flows" | xargs -r docker stop > /dev/null 2>&1 || true
+    fi
+}
+
 trap handle_error ERR
+
+# Conditional inital cleanup.
+initial_cleanup
 
 # Verify prerequisites.
 prereq_check curl
 prereq_check jq
+prereq_check nc
 
 # Verify inputs.
 if [ "$#" -lt 1 ]; then
@@ -219,9 +253,6 @@ docker run -i --rm \
     -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
     amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
-# Cleanup previous run (will be removed when supporting multiple runs)
-docker ps -q --filter "name=piiano-flows" | xargs -r docker stop > /dev/null 2>&1 || true
-
 # Run with TTY if possible
 ADDTTY=""
 if [ -t 1 ]; then
@@ -268,22 +299,19 @@ if [ ! -e ${SCAN_OUTPUT_DIR}/report.json ] ; then
   exit 1
 fi
 
-# Create a report directory with a placeholder for 'previous'
-# Move all existing reports into a unique 'previous' directory
-REPORT_DIR=${BASEDIR}/.report
-OLDER_FOLDER=$(date "+%y%m%d_%H%M%S")
-mkdir -p ${REPORT_DIR}/${OLDER_FOLDER} ${REPORT_DIR}/api
+# Create a report directory with a placeholder for the api to be mapped to flows-viewer
+CURRENT_API_FOLDER=${REPORT_DIR}/api-$(date "+%y%m%d_%H%M%S")-${UNIQUE_RUN_ID}
+mkdir -p ${REPORT_DIR} ${CURRENT_API_FOLDER}
+cp ${SCAN_OUTPUT_DIR}/report.json ${CURRENT_API_FOLDER}/offline-report.json
 
-mv ${REPORT_DIR}/api/* ${REPORT_DIR}/${OLDER_FOLDER} 2> /dev/null  || true
-cp ${SCAN_OUTPUT_DIR}/report.json ${REPORT_DIR}/api/offline-report.json
-
+set_available_port
 echo "[ ] Starting flows viewer on port ${PORT}..."
 
 docker run ${ADDTTY} -d --rm --pull=always --name piiano-flows-viewer-${UNIQUE_RUN_ID}  \
     --hostname offline-flows-container \
     -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
     -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
-    -v "${REPORT_DIR}/api:/api" \
+    -v "${CURRENT_API_FOLDER}:/api" \
     -p "${PORT}:3000" \
     ${PIIANO_CS_VIEWER_IMAGE}
 
