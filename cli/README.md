@@ -7,6 +7,7 @@
 - [Docker](https://docs.docker.com/get-docker/)
 - [curl](https://curl.se/)
 - [jq](https://jqlang.github.io/jq/download/)
+- [nc](https://formulae.brew.sh/formula/netcat)
 - The [flows-cli](./flows-cli.sh) script.
 
 ### Generate a Personal Token
@@ -39,7 +40,8 @@ This script will run the Piiano Flows container and analyze the code you provide
 
 #### Flows cli script options
 1. `FLOWS_SKIP_ENGINE` - Setting to `true` skips the engine and runs just the viewer on the existing report (This variable is only used by the flows-cli script).
-2. `FLOWS_SKIP_VIEWER` - Setting to `true` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script). 
+2. `FLOWS_SKIP_VIEWER` - Setting to `true` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script).
+3. `FLOWS_PORT` - By default is 3000. The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 
 #### Flows engine options
 1. `PIIANO_CS_JAVA_VERSION` - Specifies the Java version used for building the repository. When not provided the Piiano Flows container will attempt to automatically detect the right version.  
