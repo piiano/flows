@@ -9,9 +9,10 @@
 The hardware requirements depend on your project size and relate to the CPU and RAM provided by the host operating system to the docker containers.  
 Our hardware specification recommendations based on code size:
 
-1. For testing projects with a few thousands line of code, use 4GB RAM and 2 cores.
-2. For medium size projects with 10s of thousands of lines of code, use 8GB RAM and 4 cores.
-3. For larger projects with 100s of thousands of lines of code, use 16GB RAM and 8 cores.
+1. For testing projects with a few thousands line of code, use 4GB of RAM and 2 cores.
+2. For medium size projects with 10s of thousands of lines of code, use 8GB of RAM and 4 cores.
+3. For larger projects with 100s of thousands of lines of code, use 16GB of RAM and 8 cores.
+4. For even larger projects with millions of lines of code, use 32GB of RAM and 16 cores.
 
 #### Softwre requirements
 
