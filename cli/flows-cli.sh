@@ -26,6 +26,7 @@ VOL_NAME_GRADLE=piiano_flows_gradle_vol
 FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
+AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 
 is_absolute_path() {
   path="$1"
@@ -232,7 +233,7 @@ PIIANO_CS_USER_ID=$(curl --silent --fail -H 'Content-Type: application/json' -H 
 
 # Assume AWS role.
 echo "[ ] Getting AWS access..."
-ASSUME_ROLE_OUTPUT=$(aws sts assume-role-with-web-identity \
+ASSUME_ROLE_OUTPUT=$(docker run -i --rm ${AWS_CLI_DOCKER} sts assume-role-with-web-identity \
     --region=us-east-2 \
     --duration-seconds 3600 \
     --role-session-name "${PIIANO_CS_USER_ID}" \
@@ -251,7 +252,7 @@ docker run -i --rm \
     -e "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" \
     -e "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" \
     -e "AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}" \
-    amazon/aws-cli:2.13.15 secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
+    ${AWS_CLI_DOCKER} secretsmanager get-secret-value --secret-id "${PIIANO_CS_SECRET_ARN}" --region us-east-2 | jq -r '.SecretString' | jq -r '.dockerhub_token' | docker login -u piianoscanner --password-stdin
 
 # Run with TTY if possible
 ADDTTY=""
