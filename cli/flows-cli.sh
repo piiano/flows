@@ -2,7 +2,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-BASEDIR=$(dirname $0)
+BASEDIR=$(realpath $(dirname $0))
 REPORT_DIR=${BASEDIR}/.flows-reports
 MAX_NUM_OF_FILES_LOCAL=10240
 MAX_NUM_OF_FILES_CONTAINER=10000
