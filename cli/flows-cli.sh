@@ -147,6 +147,7 @@ initial_cleanup
 prereq_check curl
 prereq_check jq
 prereq_check nc
+prereq_check realpath
 
 # Verify inputs.
 if [ "$#" -lt 1 ]; then
