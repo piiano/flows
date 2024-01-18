@@ -21,6 +21,7 @@ Our hardware specification recommendations based on code size:
 - [jq](https://jqlang.github.io/jq/download/)
 - [nc](https://formulae.brew.sh/formula/netcat)
 - The [flows-cli](./flows-cli.sh) script.
+- `realpath` (some older Mac distributions do not contain it - use [homebrew coreutils](https://formulae.brew.sh/formula/coreutils))
 
 ### Generate a Personal Token
 
