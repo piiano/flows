@@ -27,7 +27,7 @@ Our hardware specification recommendations based on code size:
 See screenshot below:
 -  `Use Virtualization framework` setting should be enabled
 -  `File sharing implementation` - select `VirtioFS` 
--  Users of Apple Silicon - disable the usage of Rosetta for x86/amd64 emulation 
+-  For the Apple Silicon users - uncheck  `Use of Rosetta for x86/amd64 emulation on Apple Silicon`
 
 ![image](https://github.com/piiano/flows/assets/1155567/91bc27e9-7104-4a9b-b3dc-1b00cc12cf15)
 
