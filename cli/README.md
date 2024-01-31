@@ -23,6 +23,15 @@ Our hardware specification recommendations based on code size:
 - The [flows-cli](./flows-cli.sh) script.
 - `realpath` (some older Mac distributions do not contain it - use [homebrew coreutils](https://formulae.brew.sh/formula/coreutils))
 
+#### Docker Desktop configuration
+See screenshot below:
+-  Use Virtualization framework should be truned on
+-  File sharing option - select VirtioFS 
+-  Use Rosetta for x86/amd64 emulation on Apple Silicon - should be turned off 
+
+![image](https://github.com/piiano/flows/assets/1155567/91bc27e9-7104-4a9b-b3dc-1b00cc12cf15)
+
+
 ### Generate a Personal Token
 
 1. Register for a free account at https://scanner.piiano.io
