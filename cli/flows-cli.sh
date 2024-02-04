@@ -27,7 +27,6 @@ FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
-PIIANO_CS_DEBUG=$(uname -a)
 
 is_absolute_path() {
   path="$1"
@@ -283,6 +282,7 @@ else
       -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
       -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
       -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
+      -e "PIIANO_CS_DEBUG=$(uname -a)" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
