@@ -52,7 +52,6 @@ PIIANO_CLIENT_ID=<client-id> \
 PIIANO_CLIENT_SECRET=<client-secret> \
 PIIANO_CUSTOMER_IDENTIFIER=<your-company-name> \
 PIIANO_CUSTOMER_ENV=<environment-such-as-prod-or-stage> \
-PIIANO_CS_DB_OPTIONS=auto \
 ./flows-cli.sh <absolute-path-to-your-code-base>
 ```
 

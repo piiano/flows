@@ -10,6 +10,7 @@ VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
+PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
