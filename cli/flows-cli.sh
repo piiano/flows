@@ -10,6 +10,7 @@ VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
+PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
@@ -282,6 +283,8 @@ else
       -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
       -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
       -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
+      -e "PIIANO_CS_DEBUG=$(uname -a)" \
+      -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
