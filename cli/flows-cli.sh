@@ -27,6 +27,7 @@ FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
+PIIANO_CS_DEBUG=$(uname -a)
 
 is_absolute_path() {
   path="$1"
