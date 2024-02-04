@@ -282,6 +282,7 @@ else
       -e "PIIANO_CS_CUSTOMER_ENV=${PIIANO_CUSTOMER_ENV}" \
       -e "PIIANO_CS_USER_ID=${PIIANO_CS_USER_ID}" \
       -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
+      -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
