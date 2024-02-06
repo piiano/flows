@@ -237,7 +237,7 @@ PIIANO_CS_USER_ID=$(curl --silent --fail -H 'Content-Type: application/json' -H 
 echo "[ ] Getting AWS access..."
 ASSUME_ROLE_OUTPUT=$(docker run -i --rm ${AWS_CLI_DOCKER} sts assume-role-with-web-identity \
     --region=us-east-2 \
-    --duration-seconds 3600 \
+    --duration-seconds 10800 \
     --role-session-name "${PIIANO_CS_USER_ID}" \
     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
     --web-identity-token "${ACCESS_TOKEN}")
