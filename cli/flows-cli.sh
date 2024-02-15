@@ -18,7 +18,7 @@ PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
-FLOWS_SKIP_VIEWER=${FLOWS_SKIP_VIEWER:-false}
+PIIANO_CS_VIEWER_MODE=${PIIANO_CS_VIEWER_MODE:-local}
 FLOWS_FORCE_CLEANUP=${FLOWS_FORCE_CLEANUP:-false}
 UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
@@ -28,6 +28,7 @@ FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
+NETWORK_PARAM=${NETWORK_PARAM:-""}
 
 is_absolute_path() {
   path="$1"
@@ -139,6 +140,24 @@ initial_cleanup()
     fi
 }
 
+get_external_id() {
+  BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
+  BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
+  REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
+  SCAN_NAME="${SCAN_NAME:-no_scan_name}"
+  echo "[ ] Create a new scan."
+  response=$(curl --silent --fail --location -X POST \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${BACKEND_TOKEN}" \
+            -d "{\"name\": \"${SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
+            ${BACKEND_URL})
+
+  echo "[ ] Scan created."
+  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response" | jq -r '.uid')
+  echo "[ ] Scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  export PIIANO_CS_SCAN_ID_EXTERNAL
+}
+
 trap handle_error ERR
 
 # Conditional inital cleanup.
@@ -163,7 +182,10 @@ if [ "$#" -gt 1 ]; then
   shift
   EXTRA_TEST_PARAMS=("$@")
   echo "Testing mode with args ${EXTRA_TEST_PARAMS[@]}"
-  FLOWS_SKIP_VIEWER=true
+  
+  if [ ${PIIANO_CS_VIEWER_MODE} = "local" ] ; then
+      PIIANO_CS_VIEWER_MODE="none"
+  fi 
 fi
 
 if [ -z "${PIIANO_CLIENT_SECRET:-}" ]; then
@@ -265,12 +287,17 @@ else
   echo "[ ] Not a tty - will not run interactive"
 fi
 
+
+if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
+ get_external_id
+fi 
+
 # Run flows.
 if [ ${FLOWS_SKIP_ENGINE} = "true" ] ; then
   echo "[ ] Skipping engine"
 else
   echo "[ ] Starting flows engine (run id ${UNIQUE_RUN_ID})..."
-  docker run ${ADDTTY} --rm --pull=always --name piiano-flows-engine-${UNIQUE_RUN_ID}  \
+  docker run ${NETWORK_PARAM} ${ADDTTY} --rm --pull=always --name piiano-flows-engine-${UNIQUE_RUN_ID}  \
       --hostname offline-flows-container \
       -e AWS_REGION=us-east-2  \
       -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
@@ -285,6 +312,7 @@ else
       -e "PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL}" \
       -e "PIIANO_CS_DEBUG=$(uname -a)" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
+      -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" \
       -v ${VOL_NAME_M2}:"/root/.m2" \
@@ -293,7 +321,13 @@ else
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
-if [ ${FLOWS_SKIP_VIEWER} = "true" ] ; then
+if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
+  VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io/scans}"
+  echo "Your report is ready at: ${VIEWER_BASE_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  exit 0
+fi
+
+if [ ${PIIANO_CS_VIEWER_MODE} = "none" ] ; then
   echo "Skipping viewer"
   exit 0
 fi
