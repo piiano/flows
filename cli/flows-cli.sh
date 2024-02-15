@@ -147,7 +147,7 @@ get_external_id() {
   REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
   SCAN_NAME="${SCAN_NAME:-no_scan_name}"
   
-  echo "[ ] Going to create a scan."
+  echo "[ ] Creating a new scan."
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
