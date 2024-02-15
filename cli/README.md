@@ -63,10 +63,10 @@ This script will run the Piiano Flows container and analyze the code you provide
 1. `FLOWS_SKIP_ENGINE` - Setting to `true` skips the engine and runs just the viewer on the existing report (This variable is only used by the flows-cli script).
 2. `PIIANO_CS_VIEWER_MODE` -  
       Setting to `none` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script).  
-      Setting to `local` (default) will open the flows viewer locally.  
-      Setting to `online` will open the report in piiano cloud (coming soon).
-3. `FLOWS_PORT` - By default is 3000. The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
-4. `SCAN_NAME` - if `PIIANO_CS_VIEWER_MODE` = `online` , set the scan name in the cloud.
+      Setting to `local` (default) opens the flows viewer locally.  
+      Setting to `online` opens the report in piiano cloud (coming soon).
+3. `SCAN_NAME` - if `PIIANO_CS_VIEWER_MODE` = `online` , sets the scan name for the online viewer.
+4. `FLOWS_PORT` - By default is 3000. The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 
 #### Flows engine options
 1. `PIIANO_CS_JAVA_VERSION` - Specifies the Java version used for building the repository. When not provided the Piiano Flows container will attempt to automatically detect the right version.  
