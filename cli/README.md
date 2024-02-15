@@ -65,7 +65,7 @@ This script will run the Piiano Flows container and analyze the code you provide
       Setting to `none` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script).  
       Setting to `local` (default) opens the flows viewer locally.  
       Setting to `online` opens the report in piiano cloud (coming soon).
-3. `SCAN_NAME` - if `PIIANO_CS_VIEWER_MODE` = `online` , sets the scan name in the cloud.
+3. `SCAN_NAME` - if `PIIANO_CS_VIEWER_MODE` = `online` , sets the scan name for the online viewer.
 4. `FLOWS_PORT` - By default is 3000. The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 
 #### Flows engine options
