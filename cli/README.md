@@ -24,13 +24,14 @@ Our hardware specification recommendations based on code size:
 - `realpath` (some older Mac distributions do not contain it - use [homebrew coreutils](https://formulae.brew.sh/formula/coreutils))
 
 #### Docker Desktop configuration
+
 See screenshot below:
--  `Use Virtualization framework` setting should be enabled
--  `File sharing implementation` - select `VirtioFS` 
--  For the Apple Silicon users - uncheck  `Use of Rosetta for x86/amd64 emulation on Apple Silicon`
+
+- `Use Virtualization framework` setting should be enabled
+- `File sharing implementation` - select `VirtioFS`
+- For the Apple Silicon users - uncheck `Use of Rosetta for x86/amd64 emulation on Apple Silicon`
 
 ![image](https://github.com/piiano/flows/assets/1155567/91bc27e9-7104-4a9b-b3dc-1b00cc12cf15)
-
 
 ### Generate a Personal Token
 
@@ -59,21 +60,21 @@ This script will run the Piiano Flows container and analyze the code you provide
 
 ### Optional environment variables:
 
-#### Flows cli script options
-1. `FLOWS_SKIP_ENGINE` - Setting to `true` skips the engine and runs just the viewer on the existing report (This variable is only used by the flows-cli script).
-2. `PIIANO_CS_VIEWER_MODE` -  
-      Setting to `none` skips the viewer causing the script to exit after scanning (This variable is only used by the flows-cli script).  
-      Setting to `local` (default) opens the flows viewer locally.  
-      Setting to `online` opens the report in piiano cloud (coming soon).
-3. `SCAN_NAME` - if `PIIANO_CS_VIEWER_MODE` = `online` , sets the scan name for the online viewer.
-4. `FLOWS_PORT` - By default is 3000. The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
+#### Flows CLI script options
+
+1. `FLOWS_SKIP_ENGINE`(`false` by default) - Set to `true` to skip the engine. This is useful for viewing an already produced local report.
+2. `PIIANO_CS_VIEWER_MODE`(`local` by default) - controls where you can view your report:
+   - `local`: opens the flows viewer locally.
+   - `none`: is the same as `local` with the exception that the script will exit after scanning(the JSON results will be available).
+   - `online`: opens the report in piiano cloud (coming soon).
+3. `FLOWS_SCAN_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the scan name for the online viewer.
+4. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 
 #### Flows engine options
-1. `PIIANO_CS_JAVA_VERSION` - Specifies the Java version used for building the repository. When not provided the Piiano Flows container will attempt to automatically detect the right version.  
-2. `PIIANO_CS_M2_FOLDER` - Specifies the Maven `m2` cache folder to be used during the scan. When not provided the script will first attempt to use the default `.m2` folder under the user's home directory and verify that it has a `repository` sub folder. If that doesn't exist, the script will fallback to use the current working directory instead.
-3. `PIIANO_CS_GRADLE_FOLDER` - Specifies the Gradle folder containing its cache to be used during the scan. When not provided the script will first attempt to use the default `.gradle` folder under the user's home directory and verify that it has a `caches` sub folder. If that doesn't exist, the script will fallback to use the current working directory instead.
-4. `PIIANO_CS_DB_OPTIONS` - Options for building the internal code database. Supported values are: `auto`, `default` and `custom`. 
+
+1. `PIIANO_CS_JAVA_VERSION`(optional) - Specifies the Java version used for building the repository. When not provided the Piiano Flows container will attempt to automatically detect the right version.
+2. `PIIANO_CS_M2_FOLDER`(optional) - Specifies the Maven `m2` cache folder to be used during the scan. When not provided the script will first attempt to use the default `.m2` folder under the user's home directory and verify that it has a `repository` sub folder. If that doesn't exist, the script will fallback to use the current working directory instead.
+3. `PIIANO_CS_GRADLE_FOLDER`(optional) - Specifies the Gradle folder containing its cache to be used during the scan. When not provided the script will first attempt to use the default `.gradle` folder under the user's home directory and verify that it has a `caches` sub folder. If that doesn't exist, the script will fallback to use the current working directory instead.
+4. `PIIANO_CS_DB_OPTIONS`(`default` by default) - Options for building the internal code database. Supported values are: `auto`, `default` and `custom`.
 5. `PIIANO_CS_BUILD_COMMAND` - Applicable when `PIIANO_CS_DB_OPTIONS=custom`. Includes the command used to build the source repo.
-6. `PIIANO_CS_SUB_DIR` - Scan only a sub directory within the git repository. Useful for example in a mono-repo case.
-
-
+6. `PIIANO_CS_SUB_DIR`(optional) - Scan only a sub directory within the git repository. Useful for example in a mono-repo case.
