@@ -146,13 +146,13 @@ get_external_id() {
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
   BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
   REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
-  SCAN_NAME="${SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
+  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
   
   echo "[ ] Creating a new scan."
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
+            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
             ${BACKEND_URL})
 
   http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
@@ -235,6 +235,11 @@ fi
 
 if [[ "${PIIANO_CS_VIEWER_MODE}" != "online" && "${PIIANO_CS_VIEWER_MODE}" != "local" && "${PIIANO_CS_VIEWER_MODE}" != "none" ]]; then
     echo "ERROR: invalid PIIANO_CS_VIEWER_MODE, use online,local or none."
+    exit 1
+fi
+
+if [[ "${FLOWS_SKIP_ENGINE}" = "true" &&  "${PIIANO_CS_VIEWER_MODE}" != "local"  ]]; then
+    echo "ERROR: FLOWS_SKIP_ENGINE can only be used with local viewer (PIIANO_CS_VIEWER_MODE=local)"
     exit 1
 fi
 
