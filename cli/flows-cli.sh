@@ -30,6 +30,7 @@ PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
+BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
 
 is_absolute_path() {
   path="$1"
@@ -61,7 +62,6 @@ update_scan_status() {
   local status="$1"
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
-    BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
 
     echo "[ ] Updating the status to ${status}"
     response=$(curl --silent --location -i -X PUT \
@@ -70,15 +70,21 @@ update_scan_status() {
               -d "{\"status\": \"${status}\"}" \
               "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
-    http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-    body=$(echo "$response" | sed '1,/^\r$/d')
-
-    if [ "$http_status" != "200" ]; then
-        echo "[ ] Error: ${body}"
-        exit 1
-    fi
+    response_body=$(validate_response "$response")
     echo "[ ] Scan Updated successfully."
   fi
+}
+
+validate_response() {
+  local response="$1"
+  http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
+  body=$(echo "$response" | sed '1,/^\r$/d')
+
+  if [ "$http_status" != "200" ]; then
+      echo "[ ] Error: ${body}"
+      exit 1
+  fi
+  echo "$body"
 }
 
 cleanup_flow_viewer() {
@@ -170,7 +176,6 @@ initial_cleanup()
 get_external_id() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
-  BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
   REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
   FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
   
@@ -181,16 +186,10 @@ get_external_id() {
             -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
             ${BACKEND_URL})
 
-  http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-  body=$(echo "$response" | sed '1,/^\r$/d')
-
-  if [ "$http_status" != "200" ]; then
-      echo "[ ] Error: ${body}"
-      exit 1
-  fi
+  response_body=$(validate_response "$response")
 
   echo "[ ] Scan created."
-  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$body" | jq -r '.uid')
+  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.uid')
   echo "[ ] scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
