@@ -176,14 +176,14 @@ initial_cleanup()
 get_external_id() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
-  REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
-  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
+  SOURCE_CODE_DIR_NAME=$(basename ${PATH_TO_SOURCE_CODE})
+  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-${SOURCE_CODE_DIR_NAME}}"
   
   echo "[ ] Creating a new scan."
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
+            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
             ${BACKEND_URL})
 
   response_body=$(validate_response "$response")
