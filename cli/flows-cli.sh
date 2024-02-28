@@ -50,10 +50,11 @@ handle_error() {
 
   if [[ $exit_code -eq 143 ]]; then
     echo "Script was terminated by user. Exit code: $exit_code"
+    cancel_scan
   else
     echo "An error occurred. Exit code: $exit_code"
+    update_scan
   fi
-  cancel_scan
 }
 
 cancel_scan() {
@@ -168,14 +169,14 @@ get_external_id() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
   BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
-  REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
+  SOURCE_CODE_DIR_NAME=$(basename "$PATH_TO_SOURCE_CODE")
   FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
   
   echo "[ ] Creating a new scan."
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
+            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
             ${BACKEND_URL})
 
   http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
