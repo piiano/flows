@@ -48,25 +48,27 @@ prereq_check() {
 handle_error() {
   local exit_code="$?"
 
-  if [[ $exit_code -eq 143 ]]; then
+  if [[ $exit_code -eq 143 || $exit_code -eq 130 ]]; then
     echo "Script was terminated by user. Exit code: $exit_code"
-    cancel_scan
+    update_scan_status "canceled"
   else
     echo "An error occurred. Exit code: $exit_code"
-    update_failure
+    update_scan_status "failed"
   fi
 }
 
-cancel_scan() {
+update_scan_status() {
+  local status="$1"
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
     BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
     
-    echo "[ ] Canceling a scan."
-    response=$(curl --silent --location -i -X POST \
+    echo "[ ] Updating the status to ${status}"
+    response=$(curl --silent --location -i -X PUT \
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}/cancel")
+              -d "{\"status\": \"${status}\"}" \
+              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
     http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
     body=$(echo "$response" | sed '1,/^\r$/d')
@@ -75,29 +77,7 @@ cancel_scan() {
         echo "[ ] Error: ${body}"
         exit 1
     fi
-    echo "[ ] Scan canceled successfully."
-  fi
-}
-
-update_failure() {
-  if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
-    BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
-    BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
-    
-    echo "[ ] Updating the failure."
-    response=$(curl --silent --location -i -X POST \
-              -H 'Content-Type: application/json' \
-              -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}/update")
-
-    http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-    body=$(echo "$response" | sed '1,/^\r$/d')
-
-    if [ "$http_status" != "200" ]; then
-        echo "[ ] Error: ${body}"
-        exit 1
-    fi
-    echo "[ ] Scan canceled successfully."
+    echo "[ ] Scan Updated successfully."
   fi
 }
 
