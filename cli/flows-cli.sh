@@ -53,7 +53,7 @@ handle_error() {
     cancel_scan
   else
     echo "An error occurred. Exit code: $exit_code"
-    update_scan
+    update_failure
   fi
 }
 
@@ -67,6 +67,28 @@ cancel_scan() {
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
               "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}/cancel")
+
+    http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
+    body=$(echo "$response" | sed '1,/^\r$/d')
+
+    if [ "$http_status" != "200" ]; then
+        echo "[ ] Error: ${body}"
+        exit 1
+    fi
+    echo "[ ] Scan canceled successfully."
+  fi
+}
+
+update_failure() {
+  if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
+    BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
+    BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
+    
+    echo "[ ] Updating the failure."
+    response=$(curl --silent --location -i -X POST \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${BACKEND_TOKEN}" \
+              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}/update")
 
     http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
     body=$(echo "$response" | sed '1,/^\r$/d')
