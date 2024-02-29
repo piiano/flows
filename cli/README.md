@@ -63,12 +63,8 @@ This script will run the Piiano Flows container and analyze the code you provide
 #### Flows CLI script options
 
 1. `FLOWS_SKIP_ENGINE`(`false` by default) - Set to `true` to skip the engine. This is useful for viewing an already produced local report.
-2. `PIIANO_CS_VIEWER_MODE`(`local` by default) - controls where you can view your report:
-   - `local`: opens the flows viewer locally.
-   - `none`: is the same as `local` with the exception that the script will exit after scanning(the JSON results will be available).
-   - `online`: opens the report in piiano cloud (coming soon).
-3. `FLOWS_SCAN_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the scan name for the online viewer.
-4. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
+2. `FLOWS_SCAN_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the scan name for the online viewer.
+3. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 
 #### Flows engine options
 

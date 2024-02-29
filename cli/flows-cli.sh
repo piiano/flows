@@ -19,7 +19,7 @@ PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
-PIIANO_CS_VIEWER_MODE=${PIIANO_CS_VIEWER_MODE:-local}
+PIIANO_CS_VIEWER_MODE=${PIIANO_CS_VIEWER_MODE:-online}
 FLOWS_FORCE_CLEANUP=${FLOWS_FORCE_CLEANUP:-false}
 UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
@@ -30,6 +30,7 @@ PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
+BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
 
 is_absolute_path() {
   path="$1"
@@ -48,11 +49,42 @@ prereq_check() {
 handle_error() {
   local exit_code="$?"
 
-  if [[ $exit_code -eq 143 ]]; then
+  if [[ $exit_code -eq 143 || $exit_code -eq 130 ]]; then
     echo "Script was terminated by user. Exit code: $exit_code"
+    update_scan_status "canceled"
   else
     echo "An error occurred. Exit code: $exit_code"
+    update_scan_status "failed"
   fi
+}
+
+update_scan_status() {
+  local status="$1"
+  if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
+    BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
+
+    echo "[ ] Updating the status to ${status}"
+    response=$(curl --silent --location -i -X PUT \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${BACKEND_TOKEN}" \
+              -d "{\"status\": \"${status}\"}" \
+              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}")
+
+    response_body=$(validate_response "$response")
+    echo "[ ] Scan Updated successfully."
+  fi
+}
+
+validate_response() {
+  local response="$1"
+  http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
+  body=$(echo "$response" | sed '1,/^\r$/d')
+
+  if [ "$http_status" != "200" ]; then
+      echo "[ ] Error: ${body}"
+      exit 1
+  fi
+  echo "$body"
 }
 
 cleanup_flow_viewer() {
@@ -144,27 +176,20 @@ initial_cleanup()
 get_external_id() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
-  BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
-  REPOSITORY_URL=$(grep url "${PATH_TO_SOURCE_CODE}/.git/config" | awk '{print $3}')
-  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-$(basename ${PATH_TO_SOURCE_CODE})}"
+  SOURCE_CODE_DIR_NAME=$(basename ${PATH_TO_SOURCE_CODE})
+  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-${SOURCE_CODE_DIR_NAME}}"
   
   echo "[ ] Creating a new scan."
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REPOSITORY_URL}\",\"runningMode\": \"offline\"}" \
+            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
             ${BACKEND_URL})
 
-  http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-  body=$(echo "$response" | sed '1,/^\r$/d')
-
-  if [ "$http_status" != "200" ]; then
-      echo "[ ] Error: ${body}"
-      exit 1
-  fi
+  response_body=$(validate_response "$response")
 
   echo "[ ] Scan created."
-  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$body" | jq -r '.uid')
+  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.uid')
   echo "[ ] scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
@@ -311,7 +336,7 @@ fi
 
 
 if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
- get_external_id
+  get_external_id
 fi 
 
 # Run flows.
