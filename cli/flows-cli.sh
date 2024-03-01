@@ -30,7 +30,7 @@ PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
-BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app/scans}"
+BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 
 is_absolute_path() {
   path="$1"
@@ -68,7 +68,7 @@ update_scan_status() {
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
               -d "{\"status\": \"${status}\"}" \
-              "${BACKEND_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}")
+              "${BACKEND_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
     response_body=$(validate_response "$response")
     echo "[ ] Scan Updated successfully."
@@ -78,8 +78,9 @@ update_scan_status() {
 validate_response() {
   local response="$1"
   http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-  body=$(echo "$response" | sed '1,/^\r$/d')
+  echo "$http_status"
 
+  body=$(echo "$response" | sed '1,/^\r$/d')
   if [ "$http_status" != "200" ]; then
       echo "[ ] Error: ${body}"
       exit 1
@@ -173,6 +174,36 @@ initial_cleanup()
     fi
 }
 
+get_credentials() {
+  # Get an access token.
+  # echo "[ ] Getting access token..."
+  # ACCESS_TOKEN=$(curl --silent --fail --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
+
+  # echo "[ ] Obtaining user ID..."
+  # PIIANO_CS_USER_ID=$(curl --silent --fail -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
+
+  # # Assume AWS role.
+  # echo "[ ] Getting AWS access..."
+  # ASSUME_ROLE_OUTPUT=$(docker run -i --rm ${AWS_CLI_DOCKER} sts assume-role-with-web-identity \
+  #     --region=us-east-2 \
+  #     --duration-seconds 10800 \
+  #     --role-session-name "${PIIANO_CS_USER_ID}" \
+  #     --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
+  #     --web-identity-token "${ACCESS_TOKEN}")
+
+
+  echo "[ ] Get Credentials."
+  response=$(curl --silent --location -i -X POST \
+              -H 'Content-Type: application/json' \
+              -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" \
+              "${BACKEND_URL}/users/api-token")
+
+  echo "jair."
+  ASSUME_ROLE_OUTPUT=$(validate_response "$response")
+  echo "[ ] Credentials retrived"
+  export ASSUME_ROLE_OUTPUT
+}
+
 get_external_id() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
@@ -184,7 +215,7 @@ get_external_id() {
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
             -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
-            ${BACKEND_URL})
+            "${BACKEND_URL}/scans")
 
   response_body=$(validate_response "$response")
 
@@ -295,21 +326,8 @@ else
   docker run --rm -v ${PIIANO_CS_GRADLE_FOLDER}:/from -v ${VOL_NAME_GRADLE}:/to alpine sh -c "cp -r /from/* /to/"
 fi
 
-# Get an access token.
-echo "[ ] Getting access token..."
-ACCESS_TOKEN=$(curl --silent --fail --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
+get_credentials
 
-echo "[ ] Obtaining user ID..."
-PIIANO_CS_USER_ID=$(curl --silent --fail -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
-
-# Assume AWS role.
-echo "[ ] Getting AWS access..."
-ASSUME_ROLE_OUTPUT=$(docker run -i --rm ${AWS_CLI_DOCKER} sts assume-role-with-web-identity \
-    --region=us-east-2 \
-    --duration-seconds 10800 \
-    --role-session-name "${PIIANO_CS_USER_ID}" \
-    --role-arn arn:aws:iam::211558624535:role/scanner-prod-flows-offline-user \
-    --web-identity-token "${ACCESS_TOKEN}")
 
 # Set AWS credentials.
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE
@@ -369,8 +387,8 @@ else
 fi
 
 if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
-  VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io/scans}"
-  echo "Your report will be ready in a moment at: ${VIEWER_BASE_URL}/${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io}"
+  echo "Your report will be ready in a moment at: ${VIEWER_BASE_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
   exit 0
 fi
 
