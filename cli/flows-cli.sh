@@ -78,8 +78,8 @@ update_scan_status() {
 validate_response() {
   local response="$1"
   http_status=$(echo "$response" | grep -Fi HTTP/ | awk '{print $2}')
-
   body=$(echo "$response" | sed '1,/^\r$/d')
+  
   if [ "$http_status" != "200" ]; then
       echo "[ ] Error: ${body}"
       exit 1
@@ -173,20 +173,6 @@ initial_cleanup()
     fi
 }
 
-get_credentials() {
-
-  echo "[ ] Get Credentials2."
-
-  response=$(curl --silent --location -i -X POST \
-              -H 'Content-Type: application/json' \
-              -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" \
-              "${BACKEND_URL}/users/api-token")
-
-  ASSUME_ROLE_OUTPUT=$(validate_response "$response")
-  echo "[ ] Credentials retrived: ${ASSUME_ROLE_OUTPUT}"
-  export ASSUME_ROLE_OUTPUT
-  # echo "${ASSUME_ROLE_OUTPUT}"
-}
 
 get_external_id() {
   
@@ -310,19 +296,25 @@ else
   docker run --rm -v ${PIIANO_CS_GRADLE_FOLDER}:/from -v ${VOL_NAME_GRADLE}:/to alpine sh -c "cp -r /from/* /to/"
 fi
 
-get_credentials
+# Get an access token.
+echo "[ ] Getting access token..."
+ACCESS_TOKEN=$(curl --silent --fail --location -X POST -H 'Content-Type: application/json' -d "{\"clientId\": \"${PIIANO_CLIENT_ID}\",\"secret\": \"${PIIANO_CLIENT_SECRET}\"}" https://auth.scanner.piiano.io/identity/resources/auth/v1/api-token | jq -r '.accessToken')
 
+echo "[ ] Obtaining user ID..."
+PIIANO_CS_USER_ID=$(curl --silent --fail -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" https://auth.scanner.piiano.io/identity/resources/users/v2/me | jq -r '.sub')
+
+echo "[ ] Getting AWS access..."
+response=$(curl --silent --location -i -X GET \
+            -H 'Content-Type: application/json' -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            "https://scanner.piiano.io/api/app/users/aws-access")
+
+ASSUME_ROLE_OUTPUT=$(validate_response "$response")
 
 # Set AWS credentials.
 unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_PROFILE
 AWS_ACCESS_KEY_ID=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.AccessKeyId')
 AWS_SECRET_ACCESS_KEY=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SecretAccessKey')
 AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionToken')
-PIIANO_CS_USER_ID=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.SubjectFromWebIdentityToken')
-
-echo "AWS_ACCESS_KEY_ID ${AWS_ACCESS_KEY_ID}"
-echo "AWS_ACCESS_KEY_ID ${AWS_SECRET_ACCESS_KEY}"
-echo "AWS_ACCESS_KEY_ID ${AWS_SESSION_TOKEN}"
 
 # Login to ECR.
 echo "[ ] Login into container registry..."
