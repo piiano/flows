@@ -31,6 +31,7 @@ PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
+ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 
 is_absolute_path() {
   path="$1"
