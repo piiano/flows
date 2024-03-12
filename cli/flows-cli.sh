@@ -316,6 +316,10 @@ AWS_ACCESS_KEY_ID=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.AccessKey
 AWS_SECRET_ACCESS_KEY=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SecretAccessKey')
 AWS_SESSION_TOKEN=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.Credentials.SessionToken')
 
+if [ -z "$ASSUMED_ROLE_USER" ]; then
+  ASSUMED_ROLE_USER=$(echo "${ASSUME_ROLE_OUTPUT}" | jq -r '.AssumedRoleUser.AssumedRoleId')
+fi
+
 # Login to ECR.
 echo "[ ] Login into container registry..."
 docker run -i --rm \
@@ -349,6 +353,7 @@ else
       -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
       -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
       -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
+      -e ASSUMED_ROLE_USER="${ASSUMED_ROLE_USER}" \
       -e "PIIANO_CS_ONLINE=false" \
       -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
       -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
