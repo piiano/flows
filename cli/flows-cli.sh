@@ -32,6 +32,7 @@ AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
+PIIANO_CS_SCAN_ID_EXTERNAL=""
 
 is_absolute_path() {
   path="$1"
@@ -61,6 +62,7 @@ handle_error() {
 
 update_scan_status() {
   local status="$1"
+
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
 
