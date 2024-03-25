@@ -1,24 +1,26 @@
 ## Running Flows In CI/CD
 
-We support running flows in Various CI/CD environments. 
+This guide outlines the process for running flows in various CI/CD environments.
 
 ### Github
-
-We have 2 Ways to run Scans in Github:
+There are 2 ways to run scans in Github:
 
 #### Reusable Workflow
+You can utilize the reusable workflow to run flows as a job in your workflows. 
 
-This [workflow](./reusable-workflow.yml) can be used to run Flows as a job in your workflows, for example like in this Workflow which scans the Shopizer source code.
+The inputs for this reusable action are:
 
-The inputs for this reusable actions are:
+Client Id
+Client Secret (These tokens are described [here](../cli/) )
+A URL to the repository (with any authentication token needed to clone it)
+The sub-directory to scan (optional)
+Customer Identifier: <your-company-name>
+Customer Environment: <environment-such-as-prod-or-stage>
+Notes:
 
-1. Client Id 
-2. Client Secret 
-(these tokens are described [here](../cli/) ))
-3. A Url to the repo (with any authentication token needed to clone it)
-4. The sub directory to scan (optional)
-5. customer_identifier: <your-company-name>
-6.  customer_env: <environment-such-as-prod-or-stage>
+The provided runner_type should have netcat installed.
+
+Here is an example of how to use this action 
 
 ```yml
 
@@ -55,14 +57,12 @@ on:
 
 ```
 
-Notes:
-1. The provided runner_type should have netcat installed
+
 
 #### Github Action
+If the preparation of the code is more complex (e.g., connecting to Artifactory, running some scripts before build), it is recommended to use the provided Github action.
 
-In case the prepation of the code is more complex (connecting to artifactory , running some script before build ), it is recommended to use the provided github action.
-
-This is an example workdflow to use the flows scan action:
+Here's an example workflow to use the flows scan action:
 
 ```yml
 
@@ -108,21 +108,19 @@ jobs:
 
 ```
 
-The Action inputs are:
+The action inputs are:
 
-
-1. Client Id 
-2. Client Secret 
-(these tokens are described [here](../cli/) ))
-3. A directory to scan
-4. The sub directory to scan (optional)
-5. customer_identifier: <your-company-name>
-6.  customer_env: <environment-such-as-prod-or-stage>
+Client Id
+Client Secret (These tokens are described here)
+A directory to scan
+The sub-directory to scan (optional)
+Customer Identifier: <your-company-name>
+Customer Environment: <environment-such-as-prod-or-stage>
 
 
 ### Bitbucket
+This pipeline is used to scan a Bitbucket repository with flows.
 
-this pipeline is used to scan a Bitbucket repo with flows 
 
 ```yml
 
@@ -167,12 +165,8 @@ pipelines:
 
 Notes:
 
-The default Bitbucket runners can only handle scanning of smalelr repositories, use a self hosted larger runner to scan more complex projects.
+The default Bitbucket runners can only handle scanning smaller repositories. Use a self-hosted larger runner to scan more complex projects.
+Use the secrets CLIENT_ID & CLIENT_SECRET to save the keys (generating these tokens are described here).
+Please set $Customer_Id & $Customer_Env.
+The generated JSON report is saved as an artifact, and the UI viewer URL appears in the Bitbucket Build output (in a link that looks like this: Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}).
 
-Use the secrets CLIENT_ID & CLIENT_SECRET to save the Keys (generating these tokens are described [here](../cli/) )
-
-Please set  $Customer_Id & $Customer_Env.
-
-The generated JSON report is saved as an artifact , and the UI viewer URL appears in the Bitbucket Build output ( In a lint that looks like this:
-    `Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}}`
-)
