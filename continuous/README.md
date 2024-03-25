@@ -22,7 +22,7 @@ The inputs for this reusable actions are:
 
 ```yml
 
-name: Piiano Flows
+name: Piiano Flows Workflow
 on:
   workflow_dispatch:
     inputs:
@@ -66,7 +66,7 @@ This is an example workdflow to use the flows scan action:
 
 ```yml
 
-name: Piiano Flows
+name: Piiano Flows Using Action
 on:
   workflow_dispatch:
     inputs:
