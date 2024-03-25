@@ -1,0 +1,56 @@
+name: 'Flows Action'
+description: 'Runs a Piiano scann of the repo folder'
+inputs:
+  repo:  # location of repo
+    description: 'Path to repository to scan'
+    required: true
+    default: './'
+  sub_dir:
+    description: 'Sub dir in folder to scan'
+    required: false
+    default: ''
+  client_id:
+    description: 'Piiano Client Id'
+    required: true
+  client_secret:
+    description: 'Piiano Client Secret'
+  customer_identifier:
+    description: 'Company name'
+    required: true
+  customer_env:
+    required: true
+    description: 'Env'
+outputs:
+  report:
+    description: "Location of Report file"
+    value: ${{ steps.report_path.outputs.random-number }}
+  scan_id:
+    description: "Url to View report"
+    value: ${{ steps.scan.outputs.scan_id }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Flows
+      uses: actions/checkout@v4
+      with:
+        repository: piiano/flows
+        path: ${{ github.workspace }}/flows
+    - name: Run Flows CLI
+      shell: bash
+      id: scan
+      env:
+        PIIANO_CLIENT_ID: ${{inputs.client_id}}
+        PIIANO_CLIENT_SECRET: ${{inputs.client_secret}}
+        PIIANO_CUSTOMER_IDENTIFIER: ${{inputs.customer_identifier}}
+        PIIANO_CUSTOMER_ENV: ${{inputs.customer_env}}
+        PIIANO_CS_SUB_DIR: ${{inputs.sub_dir}}
+      run: |
+        ./flows/cli/flows-cli.sh ${{inputs.repo}}
+        echo "scan_id=$PIIANO_CS_SCAN_ID_EXTERNAL" >> $GITHUB_OUTPUT
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: Piiano Report
+        path: ${{inputs.repo}}/piiano-scanner/report.json
+        retention-days: 30
