@@ -65,6 +65,7 @@ This script will run the Piiano Flows container and analyze the code you provide
 1. `FLOWS_SKIP_ENGINE`(`false` by default) - Set to `true` to skip the engine. This is useful for viewing an already produced local report.
 2. `FLOWS_SCAN_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the scan name for the online viewer.
 3. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
+4. `FLOWS_USE_VOLUMES` (`true` by default) - normally, the script will create volumes for Maven and Gradle if they don't already exist and map them to the scanner engine (see more configuration in the next section). When set to `false`, the script will not attempt to create or map any volumes.
 
 #### Flows engine options
 
