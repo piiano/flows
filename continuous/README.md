@@ -42,7 +42,7 @@ on:
 
 
   run_scan_with_workflow:
-    uses: piiano/flows/continuous/scan-workflow.yml
+    uses: piiano/flows/.github/workflows/scan-workflow.yml
     with:
       repo: ${{inputs.repo_url}}
       sub_dir: ${{inputs.sub_dir}}
