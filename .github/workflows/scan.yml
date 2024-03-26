@@ -1,0 +1,57 @@
+name: Piiano Scan Workflow
+on:
+  workflow_call:
+    inputs:
+      sub_dir:
+          required: false
+          type: string
+          default: ""
+      customer_identifier:
+          required: true
+          type: string
+      customer_env:
+          required: true
+          type: string
+      runner_type:
+        description: 'Runner Type'
+        default: ubuntu-latest
+        type: string
+
+    secrets:
+      repo: # Might contain a secret token
+        required: true
+      client_id:
+        required: true
+      client_secret:
+        required: true
+jobs:
+  run_scan:
+    runs-on: ${{ inputs.runner_type || 'ubuntu-latest' }}
+    steps:
+
+    - run: |
+        git clone ${{secrets.repo}} ${{ github.workspace }}/source
+    - name: Checkout Flows
+      uses: actions/checkout@v4
+      with:
+        repository: piiano/flows
+        path: ${{ github.workspace }}/flows
+        ref: latest
+    - name: show files
+      run: |
+        ls -a ${{ github.workspace }}/source
+    - name: Run Flows CLI
+      env:
+        PIIANO_CLIENT_ID: ${{secrets.client_id}}
+        PIIANO_CLIENT_SECRET: ${{secrets.client_secret}}
+        PIIANO_CUSTOMER_IDENTIFIER: ${{inputs.customer_identifier}}
+        PIIANO_CUSTOMER_ENV: ${{inputs.customer_env}}
+        PIIANO_CS_SUB_DIR: ${{inputs.sub_dir}}
+      run: |
+        ./flows/cli/flows-cli.sh ${{ github.workspace }}/source
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: Piiano Report
+        path: ${{ github.workspace }}/source/piiano-scanner/report.json
+        retention-days: 30
