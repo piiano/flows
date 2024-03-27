@@ -25,7 +25,8 @@ UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
 VOL_NAME_M2=piiano_flows_m2_vol
 VOL_NAME_GRADLE=piiano_flows_gradle_vol
-FLOWS_USE_VOLUMES=${FLOWS_USE_VOLUMES:-true}
+FLOWS_MOUNT_TYPE=${FLOWS_MOUNT_TYPE:-volume}
+FLOWS_TEMP_FOLDER=${FLOWS_TEMP_FOLDER:-/tmp}
 FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
@@ -226,6 +227,34 @@ create_gradle_volume() {
   fi
 }
 
+create_m2_bind_mount() {
+  M2_BM_FOLDER=${FLOWS_TEMP_FOLDER}/m2
+  if [ -d ${M2_BM_FOLDER} ] ; then
+    echo "[ ] Reusing bind mount to ${M2_BM_FOLDER}. (to remove: rm -r ${M2_BM_FOLDER})"
+  else
+    echo "[ ] Creating directory for .m2 bind mount"
+    mkdir -p ${M2_BM_FOLDER}
+
+    set_maven_folder
+    echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the bind mount directory ${M2_BM_FOLDER}"
+    cp -R ${PIIANO_CS_M2_FOLDER} ${M2_BM_FOLDER}
+  fi
+}
+
+create_gradle_bind_mount() {
+  GRADLE_BM_FOLDER=${FLOWS_TEMP_FOLDER}/gradle
+  if [ -d ${GRADLE_BM_FOLDER} ] ; then
+    echo "[ ] Reusing bind mount to ${GRADLE_BM_FOLDER}. (to remove: rm -r ${GRADLE_BM_FOLDER})"
+  else
+    echo "[ ] Creating directory for gradle bind mount"
+    mkdir -p ${GRADLE_BM_FOLDER}
+
+    set_gradle_folder
+    echo "[ ] Copying gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the bind mount directory ${GRADLE_BM_FOLDER}"
+    cp -R ${PIIANO_CS_GRADLE_FOLDER} ${GRADLE_BM_FOLDER}
+  fi
+}
+
 trap handle_error ERR
 
 # Conditional inital cleanup.
@@ -299,14 +328,25 @@ if [[ "${FLOWS_SKIP_ENGINE}" = "true" &&  "${PIIANO_CS_VIEWER_MODE}" != "local" 
     exit 1
 fi
 
+
+if [[ "${FLOWS_MOUNT_TYPE}" != "volume" && "${FLOWS_MOUNT_TYPE}" != "bind-mount" && "${FLOWS_MOUNT_TYPE}" != "none" ]]; then
+    echo "ERROR: invalid FLOWS_MOUNT_TYPE, use volume,bind-mount or none."
+    exit 1
+fi
+
+
 # Bump file limit to for copying and downloads
 ulimit -n ${MAX_NUM_OF_FILES_LOCAL}
 
 # Create volumes
-if [[ "${FLOWS_USE_VOLUMES}" = "true" ]] ; then
+if [[ "${FLOWS_MOUNT_TYPE}" = "volume" ]] ; then
   create_m2_volume
   create_gradle_volume
   VOLUME_DOCKER_FLAGS=(-v ${VOL_NAME_M2}:"/root/.m2" -v ${VOL_NAME_GRADLE}:"/root/.gradle")
+elif [[ "${FLOWS_MOUNT_TYPE}" = "bind-mount" ]] ; then
+  create_m2_bind_mount
+  create_gradle_bind_mount
+  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle:"/root/.gradle")
 else
   VOLUME_DOCKER_FLAGS=""  
 fi
