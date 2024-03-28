@@ -138,8 +138,9 @@ pipelines:
           script:
             - apt-get update
             - apt-get install -y netcat
-            - git clone https://github.com/piiano/flows.git
-            - export FLOWS_USE_VOLUMES=false
+            - git clone https://github.com/piiano/flows.git ./.piiano/flows
+            - export FLOWS_MOUNT_TYPE=bind-mount
+            - export FLOWS_TEMP_FOLDER=$BITBUCKET_CLONE_DIR/.piiano
             - export PIIANO_CLIENT_ID=$CLIENT_ID
             - export PIIANO_CLIENT_SECRET=$CLIENT_SECRET
             - export PIIANO_CUSTOMER_ENV=$Customer_Env
@@ -161,7 +162,8 @@ pipelines:
 Notes:
 
 1. The default Bitbucket runners can only handle scanning smaller repositories. Use a self-hosted larger runner to scan more complex projects.
-2. Use the secrets `CLIENT_ID` and `CLIENT_SECRET` to save the keys (generating these tokens are described [here](../cli/)).
-3. Set `$Customer_Id` and `$Customer_Env`
-4. The scan report is JSON formatted and is saved as an artifact.
-5. The UI viewer URL appears in the Bitbucket Build output (e.g.`Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}`).
+2. Build your project in a step before running `flows-cli.sh`
+3. Use the secrets `CLIENT_ID` and `CLIENT_SECRET` to save the keys (generating these tokens are described [here](../cli/)).
+4. Set `$Customer_Id` and `$Customer_Env`
+5. The scan report is JSON formatted and is saved as an artifact.
+6. The UI viewer URL appears in the Bitbucket Build output (e.g.`Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}`).
