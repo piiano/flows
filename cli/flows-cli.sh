@@ -25,6 +25,8 @@ UNIQUE_RUN_ID=$((RANDOM % 900000 + 100000))
 PORT=${PORT:=3000}
 VOL_NAME_M2=piiano_flows_m2_vol
 VOL_NAME_GRADLE=piiano_flows_gradle_vol
+FLOWS_MOUNT_TYPE=${FLOWS_MOUNT_TYPE:-volume}
+FLOWS_TEMP_FOLDER=${FLOWS_TEMP_FOLDER:-/tmp}
 FLOWS_PORT=3000
 PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
@@ -32,6 +34,7 @@ AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
+PIIANO_CS_SCAN_ID_EXTERNAL=""
 
 is_absolute_path() {
   path="$1"
@@ -61,6 +64,7 @@ handle_error() {
 
 update_scan_status() {
   local status="$1"
+
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
 
@@ -197,6 +201,68 @@ get_external_id() {
   export PIIANO_CS_SCAN_ID_EXTERNAL
 }
 
+create_m2_volume() {
+  if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
+    echo "[ ] Reusing volume ${VOL_NAME_M2}. (to remove: docker volume rm ${VOL_NAME_M2})"
+  else
+    echo -n "[ ] Creating volume for .m2: "
+    docker volume create ${VOL_NAME_M2}
+
+    set_maven_folder
+    echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
+    docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME_M2}:/to alpine sh -c "cp -r /from/* /to/"
+  fi
+}
+
+create_gradle_volume() {
+  if $(docker volume inspect ${VOL_NAME_GRADLE} > /dev/null 2>&1) ; then
+    echo "[ ] Reusing volume ${VOL_NAME_GRADLE}. (to remove: docker volume rm ${VOL_NAME_GRADLE})"
+  else
+    echo -n "[ ] Creating volume for .gradle: "
+    docker volume create ${VOL_NAME_GRADLE}
+
+    set_gradle_folder
+    echo "[ ] Copying .gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the volume"
+    docker run --rm -v ${PIIANO_CS_GRADLE_FOLDER}:/from -v ${VOL_NAME_GRADLE}:/to alpine sh -c "cp -r /from/* /to/"
+  fi
+}
+
+create_m2_bind_mount() {
+  M2_BM_FOLDER=${FLOWS_TEMP_FOLDER}/m2
+  if [ -d ${M2_BM_FOLDER} ] ; then
+    echo "[ ] Reusing bind mount to ${M2_BM_FOLDER}. (to remove: rm -r ${M2_BM_FOLDER})"
+  else
+    echo "[ ] Creating directory for .m2 bind mount"
+    mkdir -p ${M2_BM_FOLDER}
+
+    set_maven_folder
+    echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the bind mount directory ${M2_BM_FOLDER}"
+    cp -R ${PIIANO_CS_M2_FOLDER} ${M2_BM_FOLDER}
+  fi
+  
+  # Count directories using find command and count lines
+  num_directories=$(find "${M2_BM_FOLDER}" -mindepth 1 -type d | wc -l)
+  echo "Number of directories in ${M2_BM_FOLDER}: $num_directories"
+}
+
+create_gradle_bind_mount() {
+  GRADLE_BM_FOLDER=${FLOWS_TEMP_FOLDER}/gradle
+  if [ -d ${GRADLE_BM_FOLDER} ] ; then
+    echo "[ ] Reusing bind mount to ${GRADLE_BM_FOLDER}. (to remove: rm -r ${GRADLE_BM_FOLDER})"
+  else
+    echo "[ ] Creating directory for gradle bind mount"
+    mkdir -p ${GRADLE_BM_FOLDER}
+
+    set_gradle_folder
+    echo "[ ] Copying gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the bind mount directory ${GRADLE_BM_FOLDER}"
+    cp -R ${PIIANO_CS_GRADLE_FOLDER} ${GRADLE_BM_FOLDER}
+  fi
+
+  # Count directories using find command and count lines
+  num_directories=$(find "${GRADLE_BM_FOLDER}" -mindepth 1 -type d | wc -l)
+  echo "Number of directories in ${GRADLE_BM_FOLDER}: $num_directories"
+}
+
 trap handle_error ERR
 
 # Conditional inital cleanup.
@@ -270,31 +336,27 @@ if [[ "${FLOWS_SKIP_ENGINE}" = "true" &&  "${PIIANO_CS_VIEWER_MODE}" != "local" 
     exit 1
 fi
 
+
+if [[ "${FLOWS_MOUNT_TYPE}" != "volume" && "${FLOWS_MOUNT_TYPE}" != "bind-mount" && "${FLOWS_MOUNT_TYPE}" != "none" ]]; then
+    echo "ERROR: invalid FLOWS_MOUNT_TYPE, use volume,bind-mount or none."
+    exit 1
+fi
+
+
 # Bump file limit to for copying and downloads
 ulimit -n ${MAX_NUM_OF_FILES_LOCAL}
 
-# Create a volume for M2
-if $(docker volume inspect ${VOL_NAME_M2} > /dev/null 2>&1) ; then
-  echo "[ ] Reusing volume ${VOL_NAME_M2}. (to remove: docker volume rm ${VOL_NAME_M2})"
+# Create volumes
+if [[ "${FLOWS_MOUNT_TYPE}" = "volume" ]] ; then
+  create_m2_volume
+  create_gradle_volume
+  VOLUME_DOCKER_FLAGS=(-v ${VOL_NAME_M2}:"/root/.m2" -v ${VOL_NAME_GRADLE}:"/root/.gradle")
+elif [[ "${FLOWS_MOUNT_TYPE}" = "bind-mount" ]] ; then
+  create_m2_bind_mount
+  create_gradle_bind_mount
+  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle:"/root/.gradle")
 else
-  echo -n "[ ] Creating volume for .m2: "
-  docker volume create ${VOL_NAME_M2}
-
-  set_maven_folder
-  echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the volume"
-  docker run --rm -v ${PIIANO_CS_M2_FOLDER}:/from -v ${VOL_NAME_M2}:/to alpine sh -c "cp -r /from/* /to/"
-fi
-
-# Create a volume for Gradle
-if $(docker volume inspect ${VOL_NAME_GRADLE} > /dev/null 2>&1) ; then
-  echo "[ ] Reusing volume ${VOL_NAME_GRADLE}. (to remove: docker volume rm ${VOL_NAME_GRADLE})"
-else
-  echo -n "[ ] Creating volume for .gradle: "
-  docker volume create ${VOL_NAME_GRADLE}
-
-  set_gradle_folder
-  echo "[ ] Copying .gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the volume"
-  docker run --rm -v ${PIIANO_CS_GRADLE_FOLDER}:/from -v ${VOL_NAME_GRADLE}:/to alpine sh -c "cp -r /from/* /to/"
+  VOLUME_DOCKER_FLAGS=""  
 fi
 
 # Get an access token.
@@ -366,14 +428,12 @@ else
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
       --env-file <(env | grep PIIANO_CS) \
-      -v "${PATH_TO_SOURCE_CODE}:/source" \
-      -v ${VOL_NAME_M2}:"/root/.m2" \
-      -v ${VOL_NAME_GRADLE}:"/root/.gradle" \
+      -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
-if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
+if [ "${PIIANO_CS_VIEWER_MODE}" = "online" ] ; then
   VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io}"
   echo "Your report will be ready in a moment at: ${VIEWER_BASE_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
   exit 0

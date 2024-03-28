@@ -1,1 +1,4 @@
-{ "engine" : "latest", "viewer" : "latest" }
+{
+    "engine": "latest",
+    "viewer": "latest"
+}

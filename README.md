@@ -23,11 +23,16 @@ More details can be found [on our website](https://piiano.com/pii-code-scanner/)
 
 ### SaaS
 
-The easiest way to run Piiano Flows is by accessing it online: https://scanner.piiano.io  
+The easiest way to run Piiano Flows is by accessing it online: https://scanner.piiano.io
 
-You can connect your publically availale Git repositories or connect private GitHub repositories. Scan your repositories online without installing anything and view results.
+You can connect your publicly available Git repositories or connect private GitHub repositories. Scan your repositories online without installing anything and view results.
 
 ### Offline
 
 Piiano Flows is also provided as a standalone container that you can run locally on your code base.
 Follow [these instructions](./cli) for working offline with Piiano Flows.
+
+### CI/CD
+
+Scan your code as part of your CI/CD pipeline. We provide specific code for Github and BitBucket that can be easily adopted to any other CI system.  
+Follow [these instructions](./ci).
