@@ -239,6 +239,10 @@ create_m2_bind_mount() {
     echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the bind mount directory ${M2_BM_FOLDER}"
     cp -R ${PIIANO_CS_M2_FOLDER} ${M2_BM_FOLDER}
   fi
+  
+  # Count directories using find command and count lines
+  num_directories=$(find "${M2_BM_FOLDER}" -mindepth 1 -type d | wc -l)
+  echo "Number of directories in ${M2_BM_FOLDER}: $num_directories"
 }
 
 create_gradle_bind_mount() {
@@ -253,6 +257,10 @@ create_gradle_bind_mount() {
     echo "[ ] Copying gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the bind mount directory ${GRADLE_BM_FOLDER}"
     cp -R ${PIIANO_CS_GRADLE_FOLDER} ${GRADLE_BM_FOLDER}
   fi
+
+  # Count directories using find command and count lines
+  num_directories=$(find "${GRADLE_BM_FOLDER}" -mindepth 1 -type d | wc -l)
+  echo "Number of directories in ${GRADLE_BM_FOLDER}: $num_directories"
 }
 
 trap handle_error ERR
