@@ -145,7 +145,6 @@ pipelines:
             - export PIIANO_CLIENT_SECRET=$CLIENT_SECRET
             - export PIIANO_CUSTOMER_ENV=$Customer_Env
             - export PIIANO_CUSTOMER_IDENTIFIER=$Customer_Id
-            - export PIIANO_CS_sub_dir=java/bank/source
             - export PIIANO_CS_GRADLE_FOLDER=$BITBUCKET_CLONE_DIR/gradle
             - export PIIANO_CS_M2_FOLDER=$BITBUCKET_CLONE_DIR/m2
             - export PIIANO_CS_query_parallelism=1
