@@ -137,8 +137,8 @@ pipelines:
           image: atlassian/default-image:4 # you can use your own image
           script:
             - apt-get update && apt-get install -y netcat # install netcat, for alpine based use apk add --update --no-cache netcat-openbsd
-            - git clone https://github.com/piiano/flows.git ./.piiano/flows
             - ./gradlew build # run you own build command outside the flows docker to fetch dependencies
+            - git clone https://github.com/piiano/flows.git ./.piiano/flows
             - export FLOWS_MOUNT_TYPE=bind-mount
             - export FLOWS_TEMP_FOLDER=$BITBUCKET_CLONE_DIR/.piiano
             - export PIIANO_CLIENT_ID=$CLIENT_ID
@@ -147,8 +147,7 @@ pipelines:
             - export PIIANO_CUSTOMER_IDENTIFIER=$Customer_Id
             - export PIIANO_CS_query_parallelism=1
             - export PIIANO_CS_max_taint_query_memory=4096
-            - cd flows/cli
-            - chmod +x flows-cli.sh
+            - cd ./.piiano/flows/cli
             - ./flows-cli.sh $BITBUCKET_CLONE_DIR
           services:
             - docker
