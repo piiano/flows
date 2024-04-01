@@ -147,7 +147,7 @@ pipelines:
             - export PIIANO_CUSTOMER_IDENTIFIER=$Customer_Id
             - export PIIANO_CS_query_parallelism=1
             - export PIIANO_CS_max_taint_query_memory=4096
-            - cd flows/cli
+            - cd ./.piiano/flows/cli
             - chmod +x flows-cli.sh
             - ./flows-cli.sh $BITBUCKET_CLONE_DIR
           services:
