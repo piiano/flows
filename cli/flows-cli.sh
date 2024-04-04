@@ -354,7 +354,7 @@ if [[ "${FLOWS_MOUNT_TYPE}" = "volume" ]] ; then
 elif [[ "${FLOWS_MOUNT_TYPE}" = "bind-mount" ]] ; then
   create_m2_bind_mount
   create_gradle_bind_mount
-  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle:"/root/.gradle")
+  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2/.m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle/.gradle:"/root/.gradle")
 else
   VOLUME_DOCKER_FLAGS=""  
 fi
