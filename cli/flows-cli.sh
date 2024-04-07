@@ -234,10 +234,10 @@ create_m2_bind_mount() {
   else
     echo "[ ] Creating directory for .m2 bind mount"
     mkdir -p ${M2_BM_FOLDER}
-
+  
     set_maven_folder
     echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the bind mount directory ${M2_BM_FOLDER}"
-    cp -R ${PIIANO_CS_M2_FOLDER} ${M2_BM_FOLDER}
+    cp -R "${PIIANO_CS_M2_FOLDER}/." ${M2_BM_FOLDER}
   fi
   
   # Count directories using find command and count lines
@@ -255,7 +255,7 @@ create_gradle_bind_mount() {
 
     set_gradle_folder
     echo "[ ] Copying gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the bind mount directory ${GRADLE_BM_FOLDER}"
-    cp -R ${PIIANO_CS_GRADLE_FOLDER} ${GRADLE_BM_FOLDER}
+    cp -R "${PIIANO_CS_GRADLE_FOLDER}/." ${GRADLE_BM_FOLDER}
   fi
 
   # Count directories using find command and count lines
@@ -354,7 +354,7 @@ if [[ "${FLOWS_MOUNT_TYPE}" = "volume" ]] ; then
 elif [[ "${FLOWS_MOUNT_TYPE}" = "bind-mount" ]] ; then
   create_m2_bind_mount
   create_gradle_bind_mount
-  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2/.m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle/.gradle:"/root/.gradle")
+  VOLUME_DOCKER_FLAGS=(-v ${FLOWS_TEMP_FOLDER}/m2:"/root/.m2" -v ${FLOWS_TEMP_FOLDER}/gradle:"/root/.gradle")
 else
   VOLUME_DOCKER_FLAGS=""  
 fi
