@@ -68,12 +68,12 @@ update_scan_status() {
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
 
-    echo "[ ] Updating the status of project: ${PROJECT_UID} scan: ${PIIANO_CS_SCAN_ID_EXTERNAL} to ${status}"
+    echo "[ ] Updating the status of project: ${PROJECT_ID} scan: ${PIIANO_CS_SCAN_ID_EXTERNAL} to ${status}"
     response=$(curl --silent --location -i -X PUT \
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
               -d "{\"status\": \"${status}\"}" \
-              "${BACKEND_URL}/projects/${PROJECT_UID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
+              "${BACKEND_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
     response_body=$(validate_response "$response")
     echo "[ ] Scan Updated successfully."
@@ -194,9 +194,9 @@ create_scan() {
 
   response_body=$(validate_response "$response")
 
-  PROJECT_UID=$(echo "$response_body" | jq -r '.uid')
+  PROJECT_ID=$(echo "$response_body" | jq -r '.uid')
   PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.scans[0].uid')
-  echo "[ ] Project Id: ${PROJECT_UID}  Scan Id: ${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  echo "[ ] Project Id: ${PROJECT_ID}  Scan Id: ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
 }
