@@ -68,12 +68,12 @@ update_scan_status() {
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
 
-    echo "[ ] Updating the status to ${status}"
+    echo "[ ] Updating the status of project: ${PROJECT_UID} scan: ${PIIANO_CS_SCAN_ID_EXTERNAL} to ${status}"
     response=$(curl --silent --location -i -X PUT \
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
               -d "{\"status\": \"${status}\"}" \
-              "${BACKEND_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
+              "${BACKEND_URL}/projects/${PROJECT_UID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
     response_body=$(validate_response "$response")
     echo "[ ] Scan Updated successfully."
@@ -178,52 +178,25 @@ initial_cleanup()
     fi
 }
 
-
 create_scan() {
-  
+
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
   SOURCE_CODE_DIR_NAME=$(basename ${PATH_TO_SOURCE_CODE})
   FLOWS_PROJECT_NAME="${FLOWS_PROJECT_NAME:-${SOURCE_CODE_DIR_NAME}}"
-  
-  response=$(curl --silent --location -i -X GET \
+
+  # Create proejct
+  echo "[ ] Creating a project : ${FLOWS_PROJECT_NAME} (if not eixst) and triggering scan."
+  response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            "${BACKEND_URL}/projects?name=${FLOWS_PROJECT_NAME}")
+            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\",\"force\": \"true\"}" \
+            "${BACKEND_URL}/projects")
 
   response_body=$(validate_response "$response")
-  total=$(echo "$response_body" | jq -r '.meta.total')
 
-  # Check if "total" is greater than 0
-  if [ "$total" -eq 1 ]; then
-      project_name=$(jq -r '.data[0].name' data.json)
-      project_uid=$(jq -r '.data[0].uid' data.json)
-      echo "[ ] Creating a new scan for project ${project_name}."
-
-      response=$(curl --silent --location -i -X POST \
-                -H 'Content-Type: application/json' \
-                -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-                "${BACKEND_URL}/projects/${project_uid}/scans")
-
-      response_body=$(validate_response "$response")
-
-      echo "[ ] New scan created."
-      PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.uid')
-      echo "[ ] Scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
-  else
-      # Create proejct
-      echo "[ ] Creating a new project ${FLOWS_PROJECT_NAME}."
-      response=$(curl --silent --location -i -X POST \
-                -H 'Content-Type: application/json' \
-                -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-                -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
-                "${BACKEND_URL}/projects")
-
-      response_body=$(validate_response "$response")
-
-      echo "[ ] Project created."
-      PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.scans[0].uid')
-      echo "[ ] Scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
-  fi
+  PROJECT_UID=$(echo "$response_body" | jq -r '.uid')
+  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.scans[0].uid')
+  echo "[ ] Project Id: ${PROJECT_UID}  Scan Id: ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
 }
