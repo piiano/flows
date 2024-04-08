@@ -63,7 +63,7 @@ This script will run the Piiano Flows container and analyze the code you provide
 #### Flows CLI script options
 
 1. `FLOWS_SKIP_ENGINE`(`false` by default) - Set to `true` to skip the engine. This is useful for viewing an already produced local report.
-2. `FLOWS_PROJECT_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the project name for the online viewer.
+2. `FLOWS_SCAN_NAME`(defaults to the local directory name being scanned) - only relevant when `PIIANO_CS_VIEWER_MODE` is `online`. Sets the scan name for the online viewer.
 3. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 4. `FLOWS_MOUNT_TYPE` (`volume` by default) - normally, the script will create docker volumes for Maven and Gradle if they don't already exist and map them to the scanner engine (see more configuration in the next section). Alternatively you can use bind mounts instead of docker volumes by setting the variable to `bind-mount`. When set to `none`, the script will not attempt to create or map any volumes.
 5. `FLOWS_TEMP_FOLDER` (`/tmp` by default) - used with bind mount
