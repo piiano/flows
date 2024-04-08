@@ -68,12 +68,12 @@ update_scan_status() {
   if [ -n "$PIIANO_CS_SCAN_ID_EXTERNAL" ]; then
     BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
 
-    echo "[ ] Updating the status to ${status}"
+    echo "[ ] Updating the status of project: ${PROJECT_ID} scan: ${PIIANO_CS_SCAN_ID_EXTERNAL} to ${status}"
     response=$(curl --silent --location -i -X PUT \
               -H 'Content-Type: application/json' \
               -H "Authorization: Bearer ${BACKEND_TOKEN}" \
               -d "{\"status\": \"${status}\"}" \
-              "${BACKEND_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
+              "${BACKEND_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}")
 
     response_body=$(validate_response "$response")
     echo "[ ] Scan Updated successfully."
@@ -178,25 +178,25 @@ initial_cleanup()
     fi
 }
 
+create_scan() {
 
-get_external_id() {
-  
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
   SOURCE_CODE_DIR_NAME=$(basename ${PATH_TO_SOURCE_CODE})
-  FLOWS_SCAN_NAME="${FLOWS_SCAN_NAME:-${SOURCE_CODE_DIR_NAME}}"
-  
-  echo "[ ] Creating a new scan."
+  FLOWS_PROJECT_NAME="${FLOWS_PROJECT_NAME:-${SOURCE_CODE_DIR_NAME}}"
+
+  # Create proejct
+  echo "[ ] Creating a new scan for project: ${FLOWS_PROJECT_NAME}"
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_SCAN_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
-            "${BACKEND_URL}/scans")
+            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\",\"force\": \"true\"}" \
+            "${BACKEND_URL}/projects")
 
   response_body=$(validate_response "$response")
 
-  echo "[ ] Scan created."
-  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.uid')
-  echo "[ ] scan id ${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  PROJECT_ID=$(echo "$response_body" | jq -r '.uid')
+  PIIANO_CS_SCAN_ID_EXTERNAL=$(echo "$response_body" | jq -r '.scans[0].uid')
+  echo "[ ] Project Id: ${PROJECT_ID}  Scan Id: ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
 }
@@ -234,10 +234,10 @@ create_m2_bind_mount() {
   else
     echo "[ ] Creating directory for .m2 bind mount"
     mkdir -p ${M2_BM_FOLDER}
-
+  
     set_maven_folder
     echo "[ ] Copying .m2 folder ${PIIANO_CS_M2_FOLDER} to the bind mount directory ${M2_BM_FOLDER}"
-    cp -R ${PIIANO_CS_M2_FOLDER} ${M2_BM_FOLDER}
+    cp -R "${PIIANO_CS_M2_FOLDER}/." ${M2_BM_FOLDER}
   fi
   
   # Count directories using find command and count lines
@@ -255,7 +255,7 @@ create_gradle_bind_mount() {
 
     set_gradle_folder
     echo "[ ] Copying gradle folder ${PIIANO_CS_GRADLE_FOLDER} to the bind mount directory ${GRADLE_BM_FOLDER}"
-    cp -R ${PIIANO_CS_GRADLE_FOLDER} ${GRADLE_BM_FOLDER}
+    cp -R "${PIIANO_CS_GRADLE_FOLDER}/." ${GRADLE_BM_FOLDER}
   fi
 
   # Count directories using find command and count lines
@@ -402,7 +402,7 @@ fi
 
 
 if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
-  get_external_id
+  create_scan
 fi 
 
 # Run flows.
