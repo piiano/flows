@@ -185,7 +185,7 @@ create_scan() {
   FLOWS_PROJECT_NAME="${FLOWS_PROJECT_NAME:-${SOURCE_CODE_DIR_NAME}}"
 
   # Create proejct
-  echo "[ ] Creating a project : ${FLOWS_PROJECT_NAME} (if not eixst) and triggering scan."
+  echo "[ ] Creating a new scan for project: ${FLOWS_PROJECT_NAME}"
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
