@@ -190,8 +190,8 @@ create_scan() {
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\",\"force\": \"true\"}" \
-            "${BACKEND_URL}/projects")
+            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
+            "${BACKEND_URL}/projects?ignore_exist=true")
 
   response_body=$(validate_response "$response")
 
