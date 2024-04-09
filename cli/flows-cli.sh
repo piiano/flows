@@ -191,7 +191,7 @@ create_scan() {
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
             -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
-            "${BACKEND_URL}/projects?ignore_exist=true")
+            "${BACKEND_URL}/projects?ignoreIfExist=true")
 
   response_body=$(validate_response "$response")
 
