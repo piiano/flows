@@ -20,6 +20,9 @@ inputs:
   customer_env:
     required: true
     description: 'Env'
+  project_name:
+    required: true
+    description: 'Project name'
 outputs:
   report:
     description: "Location of Report file"
@@ -45,6 +48,7 @@ runs:
         PIIANO_CUSTOMER_IDENTIFIER: ${{inputs.customer_identifier}}
         PIIANO_CUSTOMER_ENV: ${{inputs.customer_env}}
         PIIANO_CS_SUB_DIR: ${{inputs.sub_dir}}
+        FLOWS_PROJECT_NAME: ${{inputs.project_name}}
       run: |
         ./flows/cli/flows-cli.sh ${{inputs.repo}}
         echo "scan_id=$PIIANO_CS_SCAN_ID_EXTERNAL" >> $GITHUB_OUTPUT
