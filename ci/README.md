@@ -44,12 +44,17 @@ on:
         required: false
         type: string
         default: ""
+      project_name:
+        required: false
+        type: string
+        default: ""
 
   run_scan_with_workflow:
     uses: piiano/flows/.github/workflows/scan-workflow.yml
     with:
       repo: ${{inputs.repo_url}}
       sub_dir: ${{inputs.sub_dir}}
+      project_name: ${{inputs.project_name}}
       customer_identifier: <your-company-name>
       customer_env: github_test_action
       runner_type: <runner-type, such as ubuntu-latest , ubuntu-latest-4-cores>
@@ -82,6 +87,10 @@ on:
         required: false
         type: string
         default: ""
+      project_name:
+        required: false
+        type: string
+        default: ""
 jobs:
   run_scan_with_action:
     runs-on: "ubuntu-latest"
@@ -104,6 +113,7 @@ jobs:
           client_secret: ${{inputs.client_secret}}
           repo: ${{ github.workspace }}/code-scanner-test
           sub_dir: java/bank/source
+          project_name: ${{inputs.project_name}}
 ```
 
 The action inputs are:
@@ -112,8 +122,9 @@ The action inputs are:
 2. Client Secret ([more details](../cli/))
 3. A directory to scan
 4. The sub-directory to scan (optional)
-5. Customer Identifier: <your-company-name>
-6. Customer Environment: <environment-such-as-prod-or-stage>
+5. Project name
+6. Customer Identifier: <your-company-name>
+7. Customer Environment: <environment-such-as-prod-or-stage>
 
 ### Bitbucket
 
@@ -131,6 +142,7 @@ pipelines:
       - variables: #list variable names under here
           - name: Customer_Id
           - name: Customer_Env
+          - name: Project_Name
       - step:
           size: 2x
           name: Clone and run script
@@ -145,6 +157,7 @@ pipelines:
             - export PIIANO_CLIENT_SECRET=$CLIENT_SECRET
             - export PIIANO_CUSTOMER_ENV=$Customer_Env
             - export PIIANO_CUSTOMER_IDENTIFIER=$Customer_Id
+            - export FLOWS_PROJECT_NAME=$Project_Name
             - export PIIANO_CS_query_parallelism=1
             - export PIIANO_CS_max_taint_query_memory=4096
             - cd ./.piiano/flows/cli
@@ -161,5 +174,6 @@ Notes:
 2. Build your project in a step before running `flows-cli.sh`
 3. Use the secrets `CLIENT_ID` and `CLIENT_SECRET` to save the keys (generating these tokens are described [here](../cli/)).
 4. Set `$Customer_Id` and `$Customer_Env`
-5. The scan report is JSON formatted and is saved as an artifact.
-6. The UI viewer URL appears in the Bitbucket Build output (e.g.`Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}`).
+5. Set `$Project_Name`
+6. The scan report is JSON formatted and is saved as an artifact.
+7. The UI viewer URL appears in the Bitbucket Build output (e.g.`Your report will be ready in a moment at: https://scanner.piiano.io/scans/{scan_id}`).
