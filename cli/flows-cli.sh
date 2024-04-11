@@ -436,7 +436,7 @@ fi
 
 if [ "${PIIANO_CS_VIEWER_MODE}" = "online" ] ; then
   VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io}"
-  echo "Your report will be ready in a moment at: ${VIEWER_BASE_URL}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  echo "Your report will be ready in a moment at: ${BACKEND_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
   exit 0
 fi
 
