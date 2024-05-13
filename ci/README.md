@@ -95,17 +95,17 @@ jobs:
   run_scan_with_action:
     runs-on: "ubuntu-latest"
     steps:
-      - name: Checkout the action repo
-        uses: actions/checkout@v3
-        with:
-          repository: flows
-          path: ${{ github.workspace }}/flows
+      # - name: Checkout the action repo
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: flows
+      #     path: ${{ github.workspace }}/flows
       - name: Checkout Repo to Scan
         run: |
           git clone ${{inputs.repo_url}}
       - name: Run Scan
         id: scan
-        uses: ${{ github.workspace }}/flows/ci/action
+        uses: piiano/flows/.github/action
         with:
           customer_identifier: piiano
           customer_env: github_test_action

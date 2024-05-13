@@ -9,6 +9,10 @@ on:
           required: false
           type: string
           default: ""
+      ref:
+        required: false
+        type: string
+        default: "main"
       customer_identifier:
           required: true
           type: string
@@ -32,8 +36,12 @@ jobs:
     runs-on: ${{ inputs.runner_type || 'ubuntu-latest' }}
     steps:
 
-    - run: |
-        git clone ${{secrets.repo}} ${{ github.workspace }}/source
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ secrets.repository }}
+        ref: ${{ inputs.ref }}
+
     - name: Checkout Flows
       uses: actions/checkout@v4
       with:
