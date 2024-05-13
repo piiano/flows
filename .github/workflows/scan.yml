@@ -41,13 +41,14 @@ jobs:
       with:
         repository: ${{ secrets.repository }}
         ref: ${{ inputs.ref }}
+        path: ${{ github.workspace }}/source
 
     - name: Checkout Flows
       uses: actions/checkout@v4
       with:
         repository: piiano/flows
         path: ${{ github.workspace }}/flows
-        ref: latest
+        ref: main
     - name: show files
       run: |
         ls -a ${{ github.workspace }}/source
