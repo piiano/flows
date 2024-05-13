@@ -50,7 +50,7 @@ on:
         default: ""
 
   run_scan_with_workflow:
-    uses: piiano/flows/.github/workflows/scan-workflow.yml
+    uses: piiano/flows/.github/workflows/scan.yml
     with:
       repo: ${{inputs.repo_url}}
       sub_dir: ${{inputs.sub_dir}}

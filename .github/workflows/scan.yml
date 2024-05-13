@@ -2,6 +2,9 @@ name: Piiano Scan Workflow
 on:
   workflow_call:
     inputs:
+      project_name:
+        required: true
+        type: string
       sub_dir:
           required: false
           type: string
@@ -47,6 +50,7 @@ jobs:
         PIIANO_CUSTOMER_IDENTIFIER: ${{inputs.customer_identifier}}
         PIIANO_CUSTOMER_ENV: ${{inputs.customer_env}}
         PIIANO_CS_SUB_DIR: ${{inputs.sub_dir}}
+        FLOWS_PROJECT_NAME: ${{inputs.project_name}}
       run: |
         ./flows/cli/flows-cli.sh ${{ github.workspace }}/source
     - name: Upload Report
