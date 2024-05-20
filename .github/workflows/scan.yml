@@ -2,10 +2,17 @@ name: Piiano Scan Workflow
 on:
   workflow_call:
     inputs:
+      project_name:
+        required: true
+        type: string
       sub_dir:
           required: false
           type: string
           default: ""
+      ref:
+        required: false
+        type: string
+        default: "main"
       customer_identifier:
           required: true
           type: string
@@ -29,14 +36,19 @@ jobs:
     runs-on: ${{ inputs.runner_type || 'ubuntu-latest' }}
     steps:
 
-    - run: |
-        git clone ${{secrets.repo}} ${{ github.workspace }}/source
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ secrets.repository }}
+        ref: ${{ inputs.ref }}
+        path: ${{ github.workspace }}/source
+
     - name: Checkout Flows
       uses: actions/checkout@v4
       with:
         repository: piiano/flows
         path: ${{ github.workspace }}/flows
-        ref: latest
+        ref: main
     - name: show files
       run: |
         ls -a ${{ github.workspace }}/source
@@ -47,6 +59,7 @@ jobs:
         PIIANO_CUSTOMER_IDENTIFIER: ${{inputs.customer_identifier}}
         PIIANO_CUSTOMER_ENV: ${{inputs.customer_env}}
         PIIANO_CS_SUB_DIR: ${{inputs.sub_dir}}
+        FLOWS_PROJECT_NAME: ${{inputs.project_name}}
       run: |
         ./flows/cli/flows-cli.sh ${{ github.workspace }}/source
     - name: Upload Report
