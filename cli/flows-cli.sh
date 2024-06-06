@@ -32,6 +32,7 @@ PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
+FLOWS_APP_URL="${FLOWS_APP_URL:-https://scanner.piiano.io}"
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 PIIANO_CS_SCAN_ID_EXTERNAL=""
@@ -436,7 +437,7 @@ fi
 
 if [ "${PIIANO_CS_VIEWER_MODE}" = "online" ] ; then
   VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io}"
-  echo "Your report will be ready in a moment at: ${BACKEND_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  echo "Your report will be ready in a moment at: ${FLOWS_APP_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
   exit 0
 fi
 
