@@ -164,8 +164,8 @@ run_scan_with_action:
     # Install requried processes for scan, jq, git, curl, netcat are needed for Flows scan
     # docker.io is neededd to work with dind service in ubuntu image 
     - apt-get update && apt-get install -y maven jq  openjdk-17-jdk git curl netcat apt-transport-https ca-certificates gnupg gnupg-agent software-properties-common docker.io
-    # Build the project locally to get dependecies to local repository (gradle / mvn - in this case mvn)
-    - cd $SUB_DIR # only needed when sub dir exists and isn't empty
+    # Build the project locally to get dependecies to local repository ( in this case mvn package , change according to the build command )
+    - if [ ! -z "$SUB_DIR" ]; then cd $SUB_DIR; fi 
     - mvn package # run you own build command outside 
     - echo "Local build complete."
     - cd $CI_PROJECT_DIR
