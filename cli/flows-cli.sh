@@ -36,7 +36,7 @@ FLOWS_APP_URL="${FLOWS_APP_URL:-https://scanner.piiano.io}"
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 PIIANO_CS_SCAN_ID_EXTERNAL=""
-DIAG_FILE="output.txt"
+DIAG_FILE="diag.txt"
 
 is_absolute_path() {
   path="$1"
@@ -58,12 +58,6 @@ resources_check() {
   # Check if the command succeeded
   if [ $? -ne 0 ]; then
     echo "./diag.sh failed to execute."
-  fi
-
-    # Ensure the output file is indeed a file and not a directory
-  if [ -d "$DIAG_FILE" ]; then
-    echo "$DIAG_FILE is a directory, expected a file."
-    exit 1
   fi
 
   # Convert to absolute path
