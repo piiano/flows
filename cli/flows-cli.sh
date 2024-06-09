@@ -53,7 +53,7 @@ prereq_check() {
 }
 
 resources_check() {
-  ./diag.sh > $DIAG_FILE
+  ./diag.sh > $DIAG_FILE 2>&1
   
   # Check if the command succeeded
   if [ $? -ne 0 ]; then
@@ -446,7 +446,7 @@ else
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
-      -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" ${VOLUME_DOCKER_FLAGS[@]:-} \
+      -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
