@@ -50,7 +50,7 @@ on:
         default: ""
 
   run_scan_with_workflow:
-    uses: piiano/flows/.github/workflows/scan-workflow.yml
+    uses: piiano/flows/.github/workflows/scan.yml
     with:
       repo: ${{inputs.repo_url}}
       sub_dir: ${{inputs.sub_dir}}
@@ -125,6 +125,90 @@ The action inputs are:
 5. Project name
 6. Customer Identifier: <your-company-name>
 7. Customer Environment: <environment-such-as-prod-or-stage>
+
+### Gitlab
+
+Here is an example pipeline to run Flows in a Gitlab repo. The pipeline is designed to run a scan on the project's codebase. It uses Docker-in-Docker (dind) service to facilitate Docker operations within the pipeline. The primary job is configured to run manually, and it includes installation of necessary tools, building the project, and executing the scan.
+
+
+```yml
+# Use an image that can be used to build the project
+image: ubuntu:22.04 
+services:
+  - docker:dind
+stages:
+  - scan
+
+variables:
+  CUSTOMER_IDENTIFIER: 
+    description: "Piiano client identifier"
+    value: 'piiano-demo'
+  CUSTOMER_ENV: 
+    description: "Piiano client env - ci / dev etc..."
+    value: 'ci_demo'
+  SUB_DIR: 
+    description: "sub dir where the project resides"
+    value: 'java/bank/source'
+  PROJECT_NAME: 
+    description: "Project name"
+    value: 'Demo GL'
+  # Needed for dind to work with ubuntu image
+  DOCKER_HOST: "tcp://docker:2375"
+# Default job to be executed on push to main and can also be manually triggered
+run_scan_with_action:
+  stage: scan
+  # Choose a suitable runner
+  tags:
+    - saas-linux-medium-amd64
+  script:
+    # Install requried processes for scan, jq, git, curl, netcat are needed for Flows scan
+    # docker.io is neededd to work with dind service in ubuntu image 
+    - apt-get update && apt-get install -y maven jq  openjdk-17-jdk git curl netcat apt-transport-https ca-certificates gnupg gnupg-agent software-properties-common docker.io
+    # Build the project locally to get dependecies to local repository ( in this case mvn package , change according to the build command )
+    - if [ ! -z "$SUB_DIR" ]; then cd $SUB_DIR; fi 
+    - mvn package # run you own build command outside 
+    - echo "Local build complete."
+    - cd $CI_PROJECT_DIR
+    - |
+      if [ -n "$CI_JOB_TOKEN" ]; then
+        echo "Running scan with the following parameters:"
+        echo "Customer Identifier: $CUSTOMER_IDENTIFIER"
+        echo "Customer Environment: $CUSTOMER_ENV"
+        echo "Sub Directory: $SUB_DIR"
+        echo "Project Name: $PROJECT_NAME"
+        echo "Ref: $CI_COMMIT_REF_NAME"
+        echo "Repo: $CI_PROJECT_PATH"
+        # set up variables for scan
+        export PIIANO_CUSTOMER_ENV=$CUSTOMER_ENV
+        export PIIANO_CUSTOMER_IDENTIFIER=$CUSTOMER_IDENTIFIER
+        export FLOWS_PROJECT_NAME=$PROJECT_NAME
+        export PIIANO_CS_query_parallelism=1
+        export PIIANO_CS_sub_dir=$SUB_DIR
+        # using dind service forces this bind method, and .piiano folder to be below $CI_PROJECT_DIR
+        export FLOWS_MOUNT_TYPE=bind-mount
+        export FLOWS_TEMP_FOLDER=$CI_PROJECT_DIR/.piiano   
+        git clone https://github.com/piiano/flows.git ./.piiano/flows
+        cd ./.piiano/flows/cli
+        # run the scan
+        ./flows-cli.sh $CI_PROJECT_DIR
+      else
+        echo "CI_JOB_TOKEN is not set."
+      fi
+  only:
+    - main
+  when: manual
+```
+
+
+#### How to Trigger the Manual Job
+
+1. Go to your project's CI/CD > Pipelines page.
+2. Find the pipeline with the manual job waiting for action.
+3. Click on the pipeline to view job details.
+4. Locate the run_scan_with_action job (it will have a "Play" button next to it).
+5. Click the "Play" button to trigger the manual job.
+
+
 
 ### Bitbucket
 

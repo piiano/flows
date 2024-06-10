@@ -32,9 +32,11 @@ PORT_START_RANGE=${FLOWS_PORT}
 PORT_END_RANGE=$(( ${PORT_START_RANGE} + 128 ))
 AWS_CLI_DOCKER=amazon/aws-cli:2.13.15
 NETWORK_PARAM=${NETWORK_PARAM:-""}
+FLOWS_APP_URL="${FLOWS_APP_URL:-https://scanner.piiano.io}"
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 PIIANO_CS_SCAN_ID_EXTERNAL=""
+DIAG_FILE="diag.txt"
 
 is_absolute_path() {
   path="$1"
@@ -48,6 +50,18 @@ is_absolute_path() {
 
 prereq_check() {
   command -v "$1" >/dev/null 2>&1 || (echo "$1 is not installed. See https://github.com/piiano/flows/blob/main/cli/README.md for prerequisite list" && exit 1)
+}
+
+resources_check() {
+  ./diag.sh > $DIAG_FILE 2>&1
+  
+  # Check if the command succeeded
+  if [ $? -ne 0 ]; then
+    echo "./diag.sh failed to execute."
+  fi
+
+  # Convert to absolute path
+  DIAG_FILE_PATH="$(pwd)/$DIAG_FILE"
 }
 
 handle_error() {
@@ -275,6 +289,8 @@ prereq_check jq
 prereq_check nc
 prereq_check realpath
 
+resources_check
+
 # Verify inputs.
 if [ "$#" -lt 1 ]; then
   echo "Usage: $0 <absolute-path-to-source-code>"
@@ -430,13 +446,14 @@ else
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
+      -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
 
 if [ "${PIIANO_CS_VIEWER_MODE}" = "online" ] ; then
   VIEWER_BASE_URL="${VIEWER_BASE_URL:-https://scanner.piiano.io}"
-  echo "Your report will be ready in a moment at: ${BACKEND_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
+  echo "Your report will be ready in a moment at: ${FLOWS_APP_URL}/projects/${PROJECT_ID}/scans/${PIIANO_CS_SCAN_ID_EXTERNAL}"
   exit 0
 fi
 
