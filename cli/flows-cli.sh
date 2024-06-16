@@ -36,7 +36,8 @@ FLOWS_APP_URL="${FLOWS_APP_URL:-https://scanner.piiano.io}"
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 PIIANO_CS_SCAN_ID_EXTERNAL=""
-DIAG_FILE="diag.txt"
+DIAG_FILE_PATH="${BASEDIR}/diag.txt"
+
 
 is_absolute_path() {
   path="$1"
@@ -53,16 +54,13 @@ prereq_check() {
 }
 
 resources_check() {
-  set -x
-  ./diag.sh > $DIAG_FILE 2>&1
+
+  ${BASEDIR}/diag.sh > ${DIAG_FILE_PATH} 2>&1
   
   # Check if the command succeeded
   if [ $? -ne 0 ]; then
     echo "./diag.sh failed to execute."
   fi
-
-  # Convert to absolute path
-  DIAG_FILE_PATH="$(pwd)/$DIAG_FILE"
 }
 
 handle_error() {
@@ -447,7 +445,7 @@ else
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
-      -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" \
+      -v "${DIAG_FILE_PATH}:/stats/(basename $DIAG_FILE_PATH)" \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
 fi
