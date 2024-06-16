@@ -53,6 +53,7 @@ prereq_check() {
 }
 
 resources_check() {
+  set -x
   ./diag.sh > $DIAG_FILE 2>&1
   
   # Check if the command succeeded
