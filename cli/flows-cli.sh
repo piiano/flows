@@ -17,7 +17,7 @@ if [[ "$PIIANO_CS_LOCAL_LOGGING" = 'true' ]]; then
 fi
 
 
-PIIANO_CS_ENGINE_IMAGE=${IMAGE_ID:-"piiano/code-scanner:offline-$ENGINE_VERSION"}
+PIIANO_CS_ENGINE_IMAGE=${FLOWS_IMAGE_ID:-"piiano/code-scanner:offline-$ENGINE_VERSION"}
 PIIANO_CS_SUB_DIR=${PIIANO_CS_SUB_DIR:-""}
 PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
