@@ -15,6 +15,8 @@ ENGINE_ENV_OPTS=()
 if [ ${NO_LOGGING:-'false'} = "true" ] ; then
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_DATADOG_API_KEY='')
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='true')
+  ENGINE_ENV_OPTS+=(--env PIIANO_CS_report_sample='false')
+  PIIANO_CS_VIEWER_MODE='none'
 else 
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='false')
 fi
