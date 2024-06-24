@@ -10,23 +10,19 @@ VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
-# prepare env vars to pass into the docker
-ENGINE_ENV_OPTS=()
-if [ ${NO_LOGGING:-'false'} = "true" ] ; then
-  ENGINE_ENV_OPTS+=(--env PIIANO_CS_DATADOG_API_KEY='')
-  ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='true')
-  ENGINE_ENV_OPTS+=(--env PIIANO_CS_report_sample='false')
-  PIIANO_CS_VIEWER_MODE='none'
-else 
-  ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='false')
+PIIANO_CS_LOCAL_LOGGING=${FLOWS_LOCAL_PROCESSING:-'false'}
+if [[ "$PIIANO_CS_LOCAL_LOGGING" = 'true' ]]; then
+    PIIANO_CS_REPORT_SAMPLE='false'
+    PIIANO_CS_VIEWER_MODE='none'
 fi
 
+
+PIIANO_CS_ENGINE_IMAGE=${IMAGE_ID:-"piiano/code-scanner:offline-$ENGINE_VERSION"}
 PIIANO_CS_SUB_DIR=${PIIANO_CS_SUB_DIR:-""}
 PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:${IMAGE_ID:-"offline-$ENGINE_VERSION"}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
@@ -441,8 +437,7 @@ else
       -e "PIIANO_CS_DEBUG=$(uname -a)" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
-      "${ENGINE_ENV_OPTS[@]}" \
-      --env-file <(env | grep PIIANO_CS) \
+     --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
