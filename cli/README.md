@@ -67,6 +67,7 @@ This script will run the Piiano Flows container and analyze the code you provide
 3. `FLOWS_PORT`(3000 by default) - The flows viewer will run on this port unless it is already taken. In that case the script will automatically find the next available port.
 4. `FLOWS_MOUNT_TYPE` (`volume` by default) - normally, the script will create docker volumes for Maven and Gradle if they don't already exist and map them to the scanner engine (see more configuration in the next section). Alternatively you can use bind mounts instead of docker volumes by setting the variable to `bind-mount`. When set to `none`, the script will not attempt to create or map any volumes.
 5. `FLOWS_TEMP_FOLDER` (`/tmp` by default) - used with bind mount
+6. `FLOWS_IMAGE_ID` - use a non-default flows image. Only override when instructed by by Piiano (in the format of `piiano/code-scanner:<tag>`).
 
 #### Flows engine options
 
