@@ -10,12 +10,19 @@ VERSION_FILE=$(dirname $0)/version.json
 ENGINE_VERSION=$(jq -r .engine ${VERSION_FILE})
 VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
+# prepare env vars to pass into the docker
+PIIANO_ENV_VARS=$(env | grep PIIANO_CS)
+PIIANO_CS_LOCAL_LOGGING=${NO_LOGGING:-false}
+if [ ${PIIANO_CS_LOCAL_LOGGING} = "true" ] ; then
+  PIIANO_ENV_VARS="${PIIANO_ENV_VARS}
+PIIANO_CS_DATADOG_API_KEY=''"
+fi
 PIIANO_CS_SUB_DIR=${PIIANO_CS_SUB_DIR:-""}
 PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:offline-${ENGINE_VERSION}
+PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:${IMAGE_ID:-$ENGINE_VERSION}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
@@ -419,7 +426,7 @@ else
       -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
       -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
       -e ASSUMED_ROLE_USER="${ASSUMED_ROLE_USER}" \
-      -e "PIIANO_CS_ONLINE=false" \
+      -e "PIIANO_CS_ONLINE=${PIIANO_CS_ONLINE:-false}" \
       -e "PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=${PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME}" \
       -e "PIIANO_CS_ENDPOINT_NAME=${PIIANO_CS_ENDPOINT_NAME}" \
       -e "PIIANO_CS_CUSTOMER_IDENTIFIER=${PIIANO_CUSTOMER_IDENTIFIER}" \
@@ -429,7 +436,7 @@ else
       -e "PIIANO_CS_DEBUG=$(uname -a)" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
-      --env-file <(env | grep PIIANO_CS) \
+      --env-file <(echo $PIIANO_ENV_VARS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
       --ulimit nofile=${MAX_NUM_OF_FILES_CONTAINER}:${MAX_NUM_OF_FILES_CONTAINER} \
       ${PIIANO_CS_ENGINE_IMAGE} ${EXTRA_TEST_PARAMS[@]:-}
