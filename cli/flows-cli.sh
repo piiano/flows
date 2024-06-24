@@ -12,9 +12,11 @@ VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
 # prepare env vars to pass into the docker
 ENGINE_ENV_OPTS=()
-if [ ${NO_LOGGING} = "true" ] ; then
+if [ ${NO_LOGGING:-'false'} = "true" ] ; then
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_DATADOG_API_KEY='')
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='true')
+else 
+  ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='false')
 fi
 
 PIIANO_CS_SUB_DIR=${PIIANO_CS_SUB_DIR:-""}
@@ -22,7 +24,7 @@ PIIANO_CS_DB_OPTIONS=${PIIANO_CS_DB_OPTIONS:-default}
 PIIANO_CS_SECRET_ARN=arn:aws:secretsmanager:us-east-2:211558624535:secret:scanner-prod-offline-user-KPIV3c
 PIIANO_CS_ENDPOINT_ROLE_TO_ASSUME=arn:aws:iam::211558624535:role/sagemaker-prod-endpoint-invocation-role
 PIIANO_CS_ENDPOINT_NAME=sagemaker-prod-endpoint
-PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:${IMAGE_ID:-$ENGINE_VERSION}
+PIIANO_CS_ENGINE_IMAGE=piiano/code-scanner:${IMAGE_ID:-"offline-$ENGINE_VERSION"}
 PIIANO_CS_VIEWER_IMAGE=piiano/flows-viewer:${VIEWER_VERSION}
 PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL=${PIIANO_CS_TAINT_ANALYZER_LOG_LEVEL:-'--verbosity=progress'}
 FLOWS_SKIP_ENGINE=${FLOWS_SKIP_ENGINE:-false}
@@ -418,6 +420,7 @@ fi
 if [ ${FLOWS_SKIP_ENGINE} = "true" ] ; then
   echo "[ ] Skipping engine"
 else
+  
   echo "[ ] Starting flows engine (run id ${UNIQUE_RUN_ID})..."
   docker run ${NETWORK_PARAM} ${ADDTTY} --rm --pull=always --name piiano-flows-engine-${UNIQUE_RUN_ID}  \
       --hostname offline-flows-container \
