@@ -12,9 +12,9 @@ VIEWER_VERSION=$(jq -r .viewer ${VERSION_FILE})
 
 # prepare env vars to pass into the docker
 ENGINE_ENV_OPTS=()
-PIIANO_CS_LOCAL_LOGGING=${NO_LOGGING:-false}
-if [ ${PIIANO_CS_LOCAL_LOGGING} = "true" ] ; then
+if [ ${NO_LOGGING} = "true" ] ; then
   ENGINE_ENV_OPTS+=(--env PIIANO_CS_DATADOG_API_KEY='')
+  ENGINE_ENV_OPTS+=(--env PIIANO_CS_LOCAL_LOGGING='true')
 fi
 
 PIIANO_CS_SUB_DIR=${PIIANO_CS_SUB_DIR:-""}
