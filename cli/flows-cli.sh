@@ -200,19 +200,19 @@ initial_cleanup()
     fi
 }
 
-
 create_scan() {
   
   BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
   SOURCE_CODE_DIR_NAME=$(basename ${PATH_TO_SOURCE_CODE})
   FLOWS_PROJECT_NAME="${FLOWS_PROJECT_NAME:-${SOURCE_CODE_DIR_NAME}}"
+  REMOTE_URL=$(git -C "$PATH_TO_SOURCE_CODE" remote get-url origin)
 
   # Create proejct
-  echo "[ ] Creating a new scan for project: ${FLOWS_PROJECT_NAME}"
+  echo "[ ] Creating a new scan for project: ${FLOWS_PROJECT_NAME}. repo url: ${REMOTE_URL}"
   response=$(curl --silent --location -i -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
-            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${SOURCE_CODE_DIR_NAME}\",\"runningMode\": \"offline\"}" \
+            -d "{\"name\": \"${FLOWS_PROJECT_NAME}\",\"subDir\": \"${PIIANO_CS_SUB_DIR}\",\"repositoryUrl\": \"${REMOTE_URL}\",\"runningMode\": \"offline\"}" \
             "${BACKEND_URL}/projects?ignoreIfExist=true")
 
   response_body=$(validate_response "$response")
