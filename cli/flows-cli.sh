@@ -222,6 +222,22 @@ create_scan() {
   echo "[ ] Project Id: ${PROJECT_ID}  Scan Id: ${PIIANO_CS_SCAN_ID_EXTERNAL}"
 
   export PIIANO_CS_SCAN_ID_EXTERNAL
+  export PROJECT_ID
+}
+
+get_scan_configs() {
+  
+  BACKEND_TOKEN="${BACKEND_TOKEN:-$ACCESS_TOKEN}"
+
+  # Get last conf for project
+  echo "[ ] Getting scan config for project: ${FLOWS_PROJECT_NAME}."
+  response=$(curl --silent --location -i -X GET \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${BACKEND_TOKEN}" \
+            "${BACKEND_URL}/projects/${PROJECT_ID}/configs?scope=all&includeSensitive=false")
+
+  PIIANO_CS_CONFIGS=$(validate_response "$response")
+  export PIIANO_CS_CONFIGS
 }
 
 create_m2_volume() {
@@ -428,6 +444,7 @@ fi
 
 if [ ${PIIANO_CS_VIEWER_MODE} = "online" ] ; then
   create_scan
+  get_scan_configs
 fi 
 
 # Run flows.
@@ -455,6 +472,7 @@ else
       -e "PIIANO_CS_REPORT_SAMPLE=${PIIANO_CS_REPORT_SAMPLE}" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
+      -e "PIIANO_CS_CONFIGS=${PIIANO_CS_CONFIGS:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
       -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" \
