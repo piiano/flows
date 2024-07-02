@@ -235,9 +235,14 @@ get_scan_configs() {
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer ${BACKEND_TOKEN}" \
             "${BACKEND_URL}/projects/${PROJECT_ID}/configs?scope=all&includeSensitive=false")
-
   PIIANO_CS_CONFIGS=$(validate_response "$response")
-  export PIIANO_CS_CONFIGS
+  
+  DATA_TYPE_CATEGORIES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.dataTypeCategories // "{}"')
+  CUSTOM_FLOW_RULES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.customFlowRules // "{}"')
+  FLOW_TYPES_CONFIG=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.flowTypesConfig // "{}"')
+  export DATA_TYPE_CATEGORIES
+  export CUSTOM_FLOW_RULES
+  export FLOW_TYPES_CONFIG
 }
 
 create_m2_volume() {
@@ -472,7 +477,9 @@ else
       -e "PIIANO_CS_REPORT_SAMPLE=${PIIANO_CS_REPORT_SAMPLE}" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
-      -e "PIIANO_CS_CONFIGS=${PIIANO_CS_CONFIGS:-}" \
+      -e "PIIANO_CS_CUSTOM_FLOW_RULES=${CUSTOM_FLOW_RULES:-}" \
+      -e "PIIANO_CS_DATA_TYPE_CATEGORIES=${DATA_TYPE_CATEGORIES:-}" \
+      -e "PIIANO_CS_FLOW_TYPES_CONFIG=${FLOW_TYPES_CONFIG:-}" \
       --env-file <(env | grep PIIANO_CS) \
       -v "${PATH_TO_SOURCE_CODE}:/source" ${VOLUME_DOCKER_FLAGS[@]:-} \
       -v "${DIAG_FILE_PATH}:/stats/$(basename $DIAG_FILE_PATH)" \
