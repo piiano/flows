@@ -238,10 +238,10 @@ get_scan_configs() {
   PIIANO_CS_CONFIGS=$(validate_response "$response")
   
   DATA_TYPE_CATEGORIES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.dataTypeCategories // "{}"')
-  CUSTOM_FLOWS_RULES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.customFlowRules // "{}"')
+  CUSTOM_FLOW_RULES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.customFlowRules // "{}"')
   FLOW_TYPES_CONFIG=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.flowTypesConfig // "{}"')
   export DATA_TYPE_CATEGORIES
-  export CUSTOM_FLOWS_RULES
+  export CUSTOM_FLOW_RULES
   export FLOW_TYPES_CONFIG
 }
 
@@ -477,7 +477,7 @@ else
       -e "PIIANO_CS_REPORT_SAMPLE=${PIIANO_CS_REPORT_SAMPLE}" \
       -e "EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU"=1 \
       -e "PIIANO_CS_SCAN_ID_EXTERNAL=${PIIANO_CS_SCAN_ID_EXTERNAL:-}" \
-      -e "PIIANO_CS_CUSTOM_FLOWS_RULES=${CUSTOM_FLOWS_RULES:-}" \
+      -e "PIIANO_CS_CUSTOM_FLOW_RULES=${CUSTOM_FLOW_RULES:-}" \
       -e "PIIANO_CS_DATA_TYPE_CATEGORIES=${DATA_TYPE_CATEGORIES:-}" \
       -e "PIIANO_CS_FLOW_TYPES_CONFIG=${FLOW_TYPES_CONFIG:-}" \
       --env-file <(env | grep PIIANO_CS) \
