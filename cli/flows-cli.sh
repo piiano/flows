@@ -237,9 +237,9 @@ get_scan_configs() {
             "${BACKEND_URL}/projects/${PROJECT_ID}/configs?scope=all&includeSensitive=false")
   PIIANO_CS_CONFIGS=$(validate_response "$response")
   
-  DATA_TYPE_CATEGORIES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.dataTypeCategories // "{}"')
-  CUSTOM_FLOW_RULES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.customFlowRules // "{}"')
-  FLOW_TYPES_CONFIG=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.flowTypesConfig // "{}"')
+  DATA_TYPE_CATEGORIES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.dataTypeCategories // {} | tostring')
+  CUSTOM_FLOW_RULES=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.customFlowRules // {} | tostring')
+  FLOW_TYPES_CONFIG=$(echo "${PIIANO_CS_CONFIGS}" | jq -r '.flowTypesConfig // {} | tostring')
   export DATA_TYPE_CATEGORIES
   export CUSTOM_FLOW_RULES
   export FLOW_TYPES_CONFIG
