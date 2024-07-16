@@ -45,8 +45,10 @@ FLOWS_APP_URL="${FLOWS_APP_URL:-https://scanner.piiano.io}"
 BACKEND_URL="${BACKEND_URL:-https://scanner.piiano.io/api/app}"
 ASSUMED_ROLE_USER=${ASSUMED_ROLE_USER:-""}
 PIIANO_CS_SCAN_ID_EXTERNAL=""
+DATA_TYPE_CATEGORIES="{}"
+CUSTOM_FLOW_RULES="{}"
+FLOW_TYPES_CONFIG="{}"
 DIAG_FILE_PATH="${BASEDIR}/diag.txt"
-
 
 is_absolute_path() {
   path="$1"
